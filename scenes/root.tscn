@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://beq3ecgofbqvd"]
+
+[ext_resource type="PackedScene" uid="uid://dg1tuoxd3b4tw" path="res://addons/phantom_camera/examples/example_scenes/2D/2d_follow_framed_example_scene.tscn" id="1_j5px3"]
+
+[node name="Root" unique_id=1525387290 instance=ExtResource("1_j5px3")]
