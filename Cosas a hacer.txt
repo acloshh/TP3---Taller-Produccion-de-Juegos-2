@@ -1,0 +1,10 @@
+Limpiar colisiones, enemigos no se chocan entre si
+enemigos desaparece colisión cuando muere.
+configurar velocidades arrastre 75% de la del sigilo / sigilo 50% / enemigo
+matar y que no desaparezcan
+flecha mas rápida y mecánica de la misma
+cantidad de flechas y drops
+prepare con L2 y tensión y disparo al suelte con R2
+menú tipo Zelda BOTW
+sistema de sonidos, que todas las acciones del personaje larga un sonido que tenga x alcance
+

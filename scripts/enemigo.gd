@@ -3,8 +3,10 @@ extends CharacterBody2D
 enum Estado { PATRULLANDO, SOSPECHANDO, AGRESIVO, MUERTO, AGARRADO, DESMAYADO }
 var estado_actual = Estado.PATRULLANDO
 
-const SPEED_PATRULLA = 40.0
-const SPEED_PERSECUCION = 110.0
+const SPEED_PATRULLA = 100.0
+const SPEED_SOSPECHA = 150
+const SPEED_PERSECUCION = 285.0
+
 
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
@@ -70,7 +72,7 @@ func comportamiento_patrulla():
 
 func comportamiento_sospecha(delta):
 	# Se queda quieto mirando/buscando
-	velocity.x = 0
+	velocity.x = direccion_x * SPEED_SOSPECHA
 	tiempo_sospecha += delta
 	
 	# Si mientras sospecha, te cruzás por su visión, se pone agresivo
@@ -84,6 +86,7 @@ func comportamiento_sospecha(delta):
 	if tiempo_sospecha >= 2.0:
 		estado_actual = Estado.PATRULLANDO
 		tiempo_sospecha = 0.0
+
 
 func comportamiento_agresivo():
 	var jugador = get_tree().get_first_node_in_group("jugador")

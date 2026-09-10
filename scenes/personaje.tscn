@@ -222,10 +222,6 @@ region = Rect2(480, 32, 32, 32)
 atlas = ExtResource("3_4h8dm")
 region = Rect2(0, 64, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_w0ckt"]
-atlas = ExtResource("3_4h8dm")
-region = Rect2(384, 160, 32, 32)
-
 [sub_resource type="AtlasTexture" id="AtlasTexture_wx06q"]
 atlas = ExtResource("3_4h8dm")
 region = Rect2(416, 160, 32, 32)
@@ -784,9 +780,6 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_w0ckt")
-}, {
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_wx06q")
 }, {
 "duration": 1.0,
@@ -1130,7 +1123,7 @@ animations = [{
 size = Vector2(47, 84)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ink26"]
-size = Vector2(47.964844, 0)
+size = Vector2(47.98242, 0)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rirxc"]
 size = Vector2(20, 30)
@@ -1193,7 +1186,7 @@ metadata/_edit_vertical_guides_ = [33.0, 57.0]
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1217327672 groups=["jugador"]]
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_7c0ke")
-animation = &"combo_puño_2"
+animation = &"trepa"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=794600265]
 visible = false
@@ -1201,7 +1194,7 @@ position = Vector2(-4.5, 22)
 shape = SubResource("RectangleShape2D_4w6sy")
 
 [node name="LedgeCollider" type="CollisionShape2D" parent="." unique_id=364359255]
-position = Vector2(0, 4)
+position = Vector2(8, 4)
 shape = SubResource("RectangleShape2D_ink26")
 
 [node name="WallCheck" type="ShapeCast2D" parent="." unique_id=637984255]
@@ -1241,11 +1234,11 @@ shape = SubResource("CircleShape2D_n1ehy")
 
 [node name="PopUpAcciones" type="Label" parent="." unique_id=8129524]
 texture_filter = 1
-offset_left = -13.000001
-offset_top = -23.0
-offset_right = 75.0
-offset_bottom = -2.0
-scale = Vector2(0.3, 0.3)
+offset_left = -45.0
+offset_top = -57.0
+offset_right = 43.0
+offset_bottom = -36.0
+theme_override_font_sizes/font_size = 24
 text = "🟥 Matar
 L1 Desmayar"
 label_settings = SubResource("LabelSettings_n1ehy")

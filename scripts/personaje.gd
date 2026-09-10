@@ -1,10 +1,12 @@
 extends CharacterBody2D
 
-const SPEED_COMBATE = 150.0
-const SPEED_SIGILO = 70.0
-const SPEED_ACOSTADO = 30.0
+const SPEED_COMBATE = 300.0
+const SPEED_SIGILO = 100.0
+const SPEED_ACOSTADO = 50.0
 const SPEED_ARRASTRAR_REHEN = 40.0
-const JUMP_VELOCITY = -500.0
+const JUMP_VELOCITY = -700.0
+var gravity_up = 1800.0
+var gravity_down = 2200.0
 const DISTANCIA_REHEN = 16
 
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
@@ -29,12 +31,13 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 # @onready var icono_melee = $Interfaz/IconoMelee
 
 # --- ESTADOS PRINCIPALES ---
-var es_sigilo = true
+var es_sigilo = false
 var esta_acostado = false
 var facing_left = false
 var is_hanging = false 
 var accion_bloqueante = false
 var enemigo_agarrado = null 
+var distancia_frente = 15.0
 
 # --- SISTEMAS DE ARMAS Y COMBOS ---
 var is_aiming = false
@@ -129,34 +132,39 @@ func _physics_process(delta):
 			disparar_flecha()
 		fuerza_arco = 50.0 
 
+# --- ORIENTAR ÁREAS Y RAYOS ---
+
 	if facing_left:
-		hitbox.position.x = -abs(hitbox.position.x)
-		area_takedown.position.x = -abs(area_takedown.position.x)
-		ledge_collider.position.x = -abs(ledge_collider.position.x)
-		wall_check.target_position.x = -abs(wall_check.target_position.x)
+		hitbox.position.x = -distancia_frente
+		area_takedown.position.x = -distancia_frente
+		ledge_collider.position.x = -distancia_frente
+		
+		wall_check.position.x = 0
+		wall_check.target_position.x = -distancia_frente
 	else:
-		hitbox.position.x = abs(hitbox.position.x)
-		area_takedown.position.x = abs(area_takedown.position.x)
-		ledge_collider.position.x = abs(ledge_collider.position.x)
-		wall_check.target_position.x = abs(wall_check.target_position.x)
+		hitbox.position.x = distancia_frente
+		area_takedown.position.x = distancia_frente
+		ledge_collider.position.x = distancia_frente
+		
+		wall_check.position.x = 0
+		wall_check.target_position.x = distancia_frente
 
 	if is_hanging:
 		velocity = Vector2.ZERO 
 		
-		if not wall_check.is_colliding():
-			velocity.x = -20 if facing_left else 20
-		else:
-			var normal = wall_check.get_collision_normal(0)
-			facing_left = normal.x > 0
-			
-		if Input.is_action_just_pressed("arriba"):
+		# Detecta si el jugador empuja el control hacia la pared que está agarrando
+		var trepar_hacia_pared = (not facing_left and Input.is_action_just_pressed("mover_der")) or (facing_left and Input.is_action_just_pressed("mover_izq"))
+		
+		# Trepa si aprieta "arriba" O si empuja hacia la pared
+		if Input.is_action_just_pressed("arriba") or trepar_hacia_pared:
 			ejecutar_accion_bloqueante("trepa")
-			anim.offset.y = 5
-			anim.offset.x = 3
-			is_hanging = false 
-		elif Input.is_action_just_pressed("abajo"):
+			velocity.y = JUMP_VELOCITY
 			is_hanging = false
 			
+		# Se suelta si aprieta "abajo"
+		elif Input.is_action_just_pressed("mover_izq"):
+			is_hanging = false
+				
 	else:
 		var esta_trepando = (accion_bloqueante and anim.animation == "trepa")
 		
@@ -166,9 +174,12 @@ func _physics_process(delta):
 			elif direction > 0:
 				facing_left = true if enemigo_agarrado != null else false
 
-		if not is_on_floor() and not esta_trepando:
-			velocity.y += gravity * delta
-
+		if not is_on_floor():
+			# Aplica más peso si está cayendo que si está subiendo
+			if velocity.y < 0:
+				velocity.y += gravity_up * delta
+			else:
+				velocity.y += gravity_down * delta
 		var current_speed = SPEED_COMBATE
 		
 		if accion_bloqueante or is_aiming:
@@ -188,9 +199,14 @@ func _physics_process(delta):
 		else:
 			velocity.x = move_toward(velocity.x, 0, current_speed)
 
+		# Salto (Botón A)
 		if Input.is_action_just_pressed("saltar") and is_on_floor() and not accion_bloqueante and not esta_acostado:
 			velocity.y = JUMP_VELOCITY
-			es_sigilo = false 
+			es_sigilo = false # Saltar rompe el sigilo
+
+		# Cortar el salto si el jugador suelta el botón rápido (Salto realista)
+		if Input.is_action_just_released("saltar") and velocity.y < 0:
+			velocity.y *= 0.5
 
 	if enemigo_agarrado != null:
 		var offset_x = -DISTANCIA_REHEN if facing_left else DISTANCIA_REHEN
