@@ -34,6 +34,7 @@ animations = [{
 size = Vector2(4, 5)
 
 [node name="Flecha" type="Area2D" unique_id=30172648]
+scale = Vector2(2, 2)
 script = ExtResource("1_26ync")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1998475741]
