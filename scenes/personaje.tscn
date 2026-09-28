@@ -875,7 +875,7 @@ animations = [{
 }],
 "loop": false,
 "name": &"combo_puño_3",
-"speed": 13.0
+"speed": 10.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -1122,14 +1122,20 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_4w6sy"]
 size = Vector2(47, 84)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ho3dl"]
+size = Vector2(47, 63)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vylx4"]
+size = Vector2(48, 35)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ink26"]
-size = Vector2(47.98242, 0)
+size = Vector2(40.247803, 0)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_rirxc"]
 size = Vector2(20, 30)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vti64"]
-size = Vector2(80, 4)
+size = Vector2(40, 50)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_n1ehy"]
 size = Vector2(16.625, 15.875)
@@ -1186,15 +1192,22 @@ metadata/_edit_vertical_guides_ = [33.0, 57.0]
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1217327672 groups=["jugador"]]
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_7c0ke")
-animation = &"trepa"
+animation = &"idle_sigilo"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=794600265]
-visible = false
-position = Vector2(-4.5, 22)
+[node name="ColisionParado" type="CollisionShape2D" parent="." unique_id=794600265]
+position = Vector2(0, 22)
 shape = SubResource("RectangleShape2D_4w6sy")
 
+[node name="ColisionSigilo" type="CollisionShape2D" parent="." unique_id=1466367170]
+position = Vector2(0, 32.5)
+shape = SubResource("RectangleShape2D_ho3dl")
+
+[node name="ColisionAcostado" type="CollisionShape2D" parent="." unique_id=32423581]
+position = Vector2(0, 46.5)
+shape = SubResource("RectangleShape2D_vylx4")
+
 [node name="LedgeCollider" type="CollisionShape2D" parent="." unique_id=364359255]
-position = Vector2(8, 4)
+position = Vector2(0, 4)
 shape = SubResource("RectangleShape2D_ink26")
 
 [node name="WallCheck" type="ShapeCast2D" parent="." unique_id=637984255]
@@ -1206,7 +1219,7 @@ target_position = Vector2(15, 0)
 target_position = Vector2(0, 68)
 
 [node name="TopCheck" type="ShapeCast2D" parent="." unique_id=1944268495]
-position = Vector2(0, -2)
+position = Vector2(0, 4)
 shape = SubResource("RectangleShape2D_vti64")
 target_position = Vector2(0, 0)
 
@@ -1220,10 +1233,6 @@ limit_bottom = 1080
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=186070358]
 position = Vector2(41.125, 37.5)
-shape = SubResource("RectangleShape2D_n1ehy")
-
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="Hitbox" unique_id=1642890737]
-position = Vector2(-38.6875, 37.0625)
 shape = SubResource("RectangleShape2D_n1ehy")
 
 [node name="AreaTakedown" type="Area2D" parent="." unique_id=1185697625]
@@ -1246,7 +1255,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="LineaTrayectoria" type="Line2D" parent="." unique_id=904513105]
-position = Vector2(6, -9)
+position = Vector2(0, -9)
 width = 2.0
 texture = ExtResource("7_4h8dm")
 
@@ -1287,3 +1296,6 @@ theme_override_font_sizes/font_size = 24
 label_settings = SubResource("LabelSettings_ink26")
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="PuntoDisparo" type="Marker2D" parent="." unique_id=1805242074]
+position = Vector2(40, 29)

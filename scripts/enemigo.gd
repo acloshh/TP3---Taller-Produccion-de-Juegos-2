@@ -7,7 +7,6 @@ const SPEED_PATRULLA = 100.0
 const SPEED_SOSPECHA = 150
 const SPEED_PERSECUCION = 285.0
 
-
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 @onready var anim = $AnimatedSprite2D
@@ -87,7 +86,6 @@ func comportamiento_sospecha(delta):
 		estado_actual = Estado.PATRULLANDO
 		tiempo_sospecha = 0.0
 
-
 func comportamiento_agresivo():
 	var jugador = get_tree().get_first_node_in_group("jugador")
 	
@@ -123,15 +121,16 @@ func actualizar_animaciones():
 	
 	match estado_actual:
 		Estado.PATRULLANDO:
-			anim.play("patrullar")
+			anim.play("patrulla_camina")
 		Estado.SOSPECHANDO:
-			anim.play("alerta_amarilla")
+			anim.play("curioso_camina")
 		Estado.AGRESIVO:
-			anim.play("alerta_roja")
+			anim.play("corre_y_ataca")
 		Estado.AGARRADO:
-			anim.play("dañado") 
+			anim.play("agarrado")
 		Estado.DESMAYADO:
-			anim.play("desmayado")
+			anim.play("desmayado_idle")
+
 func forzar_sospecha():
 	if estado_actual == Estado.PATRULLANDO:
 		estado_actual = Estado.SOSPECHANDO
@@ -139,14 +138,14 @@ func forzar_sospecha():
 
 func recibir_dano():
 	if estado_actual == Estado.MUERTO or estado_actual == Estado.DESMAYADO:
-		return 
+		return
 		
 	vida -= 1
 	
 	if vida <= 0:
 		estado_actual = Estado.MUERTO
-		velocity.x = 0 
-		anim.play("muerto")
+		velocity.x = 0
+		anim.play("danio_cae_al_suelo")
 		await anim.animation_finished
 		queue_free()
 	else:
@@ -154,11 +153,10 @@ func recibir_dano():
 		estado_actual = Estado.AGRESIVO # Se enoja porque le disparaste
 		velocity.x = 0 # Opcional: hacemos que el golpe lo frene un instante
 		
-		anim.play("dañado")
+		anim.play("recibe_danio")
 		await anim.animation_finished # Esperamos que termine la animación
 		
 		esta_herido = false # Liberamos las animaciones de nuevo
-
 
 # --- FUNCIONES DE SIGILO Y REHÉN ---
 
@@ -187,12 +185,12 @@ func soltar_agarre():
 	velocity.x = 0
 	# Volvemos a prender la colisión para que caiga contra el piso
 	$CollisionShape2D.set_deferred("disabled", false)
-	anim.play("desmayado")
+	anim.play("desmayado_idle")
 
 func ser_neutralizado():
 	estado_actual = Estado.MUERTO
 	velocity = Vector2.ZERO
-	anim.play("muerto")
+	anim.play("agarrado_matar")
 	await anim.animation_finished
 	queue_free()
 	
@@ -203,11 +201,11 @@ func recibir_flechazo(tipo_flecha):
 	if tipo_flecha == "letal":
 		estado_actual = Estado.MUERTO
 		velocity.x = 0
-		anim.play("muerto")
+		anim.play("danio_cae_al_suelo")
 		await anim.animation_finished
 		queue_free()
 	elif tipo_flecha == "desmayante":
 		estado_actual = Estado.DESMAYADO
 		velocity.x = 0
 		$CollisionShape2D.set_deferred("disabled", false)
-		anim.play("desmayado")
+		anim.play("desmayado_idle")

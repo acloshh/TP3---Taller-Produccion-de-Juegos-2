@@ -14,45 +14,62 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @export var flecha_escena: PackedScene
 
 @onready var anim = $AnimatedSprite2D
+@onready var colision_parado = $ColisionParado
+@onready var colision_sigilo = $ColisionSigilo
+@onready var colision_acostado = $ColisionAcostado
 @onready var ledge_collider = $LedgeCollider
 @onready var wall_check = $WallCheck
 @onready var floor_check = $FloorCheck
 @onready var top_check = $TopCheck
-@onready var hitbox = $Hitbox 
-@onready var hitbox_shape = $Hitbox/CollisionShape2D 
+@onready var hitbox = $Hitbox
+@onready var hitbox_shape = $Hitbox/CollisionShape2D
 @onready var area_takedown = $AreaTakedown
-@onready var popup_acciones = $PopUpAcciones 
+@onready var popup_acciones = $PopUpAcciones
 @onready var linea_trayectoria = $LineaTrayectoria
-@onready var icono_flecha = $Interfaz/IconoFlecha 
-@onready var texto_flecha = $Interfaz/TextoFlecha 
+@onready var icono_flecha = $Interfaz/IconoFlecha
+@onready var texto_flecha = $Interfaz/TextoFlecha
 @onready var texto_melee = $Interfaz/TextoMelee
-@onready var icono_cuchillo = $Interfaz/IconoCuchillo 
+@onready var icono_cuchillo = $Interfaz/IconoCuchillo
 @onready var icono_puno = $"Interfaz/IconoPuño"
 # @onready var icono_melee = $Interfaz/IconoMelee
+@onready var punto_disparo = $PuntoDisparo
 
-# --- ESTADOS PRINCIPALES ---
+var pos_inicial_disparo_x = 0.0
+
+# --- ESTADOS PRINCIPALES Y AJUSTES DE SIMETRÍA ---
 var es_sigilo = false
 var esta_acostado = false
 var facing_left = false
-var is_hanging = false 
+var is_hanging = false
 var accion_bloqueante = false
-var enemigo_agarrado = null 
+var enemigo_agarrado = null
+
+# Ajustá estos dos valores si necesitás acercar/alejar las colisiones o centrar el dibujo al girar:
 var distancia_frente = 15.0
+var compensacion_sprite = 0
 
 # --- SISTEMAS DE ARMAS Y COMBOS ---
 var is_aiming = false
-var fuerza_arco = 50.0 
+var fuerza_arco = 50.0
 var direccion_tiro = Vector2.RIGHT
-var tipo_flecha = "letal" 
+var tipo_flecha = "letal"
 var arma_cuerpo_a_cuerpo = "cuchillo"
 var combo_paso = 0
 var ataque_encolado = false
 
 func _ready():
 	hitbox_shape.disabled = true
-	popup_acciones.hide() 
+	popup_acciones.hide()
 	anim.animation_finished.connect(_on_animation_finished)
 	hitbox.body_entered.connect(_on_hitbox_body_entered)
+	
+	# Estado inicial de las colisiones del cuerpo
+	colision_parado.disabled = false
+	colision_sigilo.disabled = true
+	colision_acostado.disabled = true
+	
+	# Guardamos la posición X original del Marker2D que pusiste en el editor
+	pos_inicial_disparo_x = abs(punto_disparo.position.x)
 	
 	icono_flecha.play(tipo_flecha)
 	texto_flecha.text = "F. Letal"
@@ -73,11 +90,33 @@ func _physics_process(delta):
 	var direction = Input.get_axis("mover_izq", "mover_der")
 
 	if Input.is_action_just_pressed("cambiar_postura") and not accion_bloqueante and enemigo_agarrado == null:
-		es_sigilo = !es_sigilo
+		# Si está en sigilo, solo lo deja pararse si no hay techo arriba
+		if es_sigilo:
+			if not top_check.is_colliding():
+				es_sigilo = false
+		else:
+			es_sigilo = true
 
-	esta_acostado = Input.is_action_pressed("abajo") and is_on_floor() and not accion_bloqueante
+	# Se mantiene acostado si aprieta abajo O si ya estaba acostado y tiene un techo encima
+	var quiere_acostarse = Input.is_action_pressed("abajo") and is_on_floor() and not is_hanging and not accion_bloqueante
+	var bloqueado_acostado = esta_acostado and top_check.is_colliding()
+	esta_acostado = quiere_acostarse or bloqueado_acostado
 
-	if Input.is_action_just_pressed("atraer") and is_on_floor() and not accion_bloqueante:
+	# --- ACTUALIZAR COLISIONES SEGÚN POSTURA ---
+	if esta_acostado:
+		colision_parado.disabled = true
+		colision_sigilo.disabled = true
+		colision_acostado.disabled = false
+	elif es_sigilo and is_on_floor() and not is_hanging:
+		colision_parado.disabled = true
+		colision_sigilo.disabled = false
+		colision_acostado.disabled = true
+	else:
+		colision_parado.disabled = false
+		colision_sigilo.disabled = true
+		colision_acostado.disabled = true
+
+	if Input.is_action_just_pressed("atraer") and is_on_floor() and not is_hanging and not accion_bloqueante:
 		ejecutar_accion_bloqueante("atrae_en_posicion_de_sigilo" if es_sigilo else "atrae_en_posicion_de_combate")
 
 	if Input.is_action_just_pressed("agarre") and not accion_bloqueante:
@@ -91,28 +130,27 @@ func _physics_process(delta):
 						popup_acciones.show()
 						es_sigilo = false
 						ejecutar_accion_bloqueante("agarra_enemigo")
-						break 
+						break
 		else:
 			enemigo_agarrado.soltar_agarre()
 			enemigo_agarrado = null
-			popup_acciones.hide() 
+			popup_acciones.hide()
 
 	if Input.is_action_just_pressed("atacar") and not is_hanging:
 		if enemigo_agarrado != null:
 			enemigo_agarrado.ser_neutralizado()
 			enemigo_agarrado = null
-			popup_acciones.hide() 
+			popup_acciones.hide()
 			ejecutar_accion_bloqueante("mata_enemigo")
 		elif not is_aiming:
 			manejar_combo_ataque()
-
+			
+			
+	# --- LÓGICA DE APUNTAR Y DISPARAR ARCO (Gatillos) ---
 	if Input.is_action_pressed("apuntar") and not is_hanging and enemigo_agarrado == null and not accion_bloqueante:
 		is_aiming = true
 		
-		if Input.is_action_pressed("disparar"):
-			fuerza_arco += 600 * delta
-			fuerza_arco = clamp(fuerza_arco, 50.0, 800.0)
-		
+		# 1. Orientación y apuntado
 		var vector_apuntado = Input.get_vector("mover_izq", "mover_der", "arriba", "abajo")
 		if vector_apuntado != Vector2.ZERO:
 			direccion_tiro = vector_apuntado.normalized()
@@ -123,47 +161,64 @@ func _physics_process(delta):
 		else:
 			direccion_tiro = Vector2(-1.0 if facing_left else 1.0, 0.0)
 			
-		actualizar_trayectoria(delta)
-		
+		# 2. Tensar el arco manteniendo R2
+		if Input.is_action_pressed("disparar"):
+			fuerza_arco += 600 * delta
+			fuerza_arco = clamp(fuerza_arco, 50.0, 800.0)
+			actualizar_trayectoria(delta) # Muestra la línea mientras tensa
+		else:
+			linea_trayectoria.clear_points() # Oculta la línea si solo está apuntando sin tensar
+			
+		# 3. Disparar al soltar R2
+		if Input.is_action_just_released("disparar"):
+			disparar_flecha()
+			fuerza_arco = 50.0 # Resetea la tensión pero sigue apuntando
+
+	# 4. Cancelar todo al soltar L2
 	elif Input.is_action_just_released("apuntar") and is_aiming:
 		is_aiming = false
-		linea_trayectoria.clear_points() 
-		if fuerza_arco > 50.0:
-			disparar_flecha()
-		fuerza_arco = 50.0 
+		fuerza_arco = 50.0
+		linea_trayectoria.clear_points()
 
 # --- ORIENTAR ÁREAS Y RAYOS ---
-
 	if facing_left:
 		hitbox.position.x = -distancia_frente
+		hitbox_shape.position.x = -abs(hitbox_shape.position.x)
+		
 		area_takedown.position.x = -distancia_frente
 		ledge_collider.position.x = -distancia_frente
+		punto_disparo.position.x = -40.0
 		
-		wall_check.position.x = 0
-		wall_check.target_position.x = -distancia_frente
+		wall_check.position.x = -distancia_frente
+		wall_check.target_position.x = 0
 	else:
 		hitbox.position.x = distancia_frente
+		hitbox_shape.position.x = abs(hitbox_shape.position.x)
+		
 		area_takedown.position.x = distancia_frente
 		ledge_collider.position.x = distancia_frente
+		punto_disparo.position.x = 40.0
 		
-		wall_check.position.x = 0
-		wall_check.target_position.x = distancia_frente
-
+		wall_check.position.x = distancia_frente
+		wall_check.target_position.x = 0
+		
+	# --- LÓGICA DE TREPAR Y MOVIMIENTO ---
 	if is_hanging:
-		velocity = Vector2.ZERO 
+		velocity = Vector2.ZERO
 		
-		# Detecta si el jugador empuja el control hacia la pared que está agarrando
+		# Detecta si el jugador empuja el control hacia la pared o hacia el lado contrario
 		var trepar_hacia_pared = (not facing_left and Input.is_action_just_pressed("mover_der")) or (facing_left and Input.is_action_just_pressed("mover_izq"))
+		var soltarse_hacia_atras = (not facing_left and Input.is_action_just_pressed("mover_izq")) or (facing_left and Input.is_action_just_pressed("mover_der"))
 		
 		# Trepa si aprieta "arriba" O si empuja hacia la pared
 		if Input.is_action_just_pressed("arriba") or trepar_hacia_pared:
+			is_hanging = false
 			ejecutar_accion_bloqueante("trepa")
-			velocity.y = JUMP_VELOCITY
-			is_hanging = false
 			
-		# Se suelta si aprieta "abajo"
-		elif Input.is_action_just_pressed("mover_izq"):
+		# Se suelta si aprieta "abajo" O si empuja hacia atrás
+		elif Input.is_action_just_pressed("abajo") or soltarse_hacia_atras:
 			is_hanging = false
+			position.y += 2 # Despega el LedgeCollider de la esquina para caer limpio
 				
 	else:
 		var esta_trepando = (accion_bloqueante and anim.animation == "trepa")
@@ -180,13 +235,14 @@ func _physics_process(delta):
 				velocity.y += gravity_up * delta
 			else:
 				velocity.y += gravity_down * delta
+				
 		var current_speed = SPEED_COMBATE
 		
 		if accion_bloqueante or is_aiming:
-			current_speed = 0.0 
-			velocity.x = 0 
+			current_speed = 0.0
+			velocity.x = 0
 			if esta_trepando:
-				velocity.y = -120 
+				velocity.y = -120
 		elif enemigo_agarrado != null:
 			current_speed = SPEED_ARRASTRAR_REHEN
 		elif esta_acostado:
@@ -199,8 +255,8 @@ func _physics_process(delta):
 		else:
 			velocity.x = move_toward(velocity.x, 0, current_speed)
 
-		# Salto (Botón A)
-		if Input.is_action_just_pressed("saltar") and is_on_floor() and not accion_bloqueante and not esta_acostado:
+	# Salto (Botón A) - Solo bloquea por techo si estás en sigilo tratando de pararte al saltar
+		if Input.is_action_just_pressed("saltar") and is_on_floor() and not accion_bloqueante and not esta_acostado and not (es_sigilo and top_check.is_colliding()):
 			velocity.y = JUMP_VELOCITY
 			es_sigilo = false # Saltar rompe el sigilo
 
@@ -210,10 +266,10 @@ func _physics_process(delta):
 
 	if enemigo_agarrado != null:
 		var offset_x = -DISTANCIA_REHEN if facing_left else DISTANCIA_REHEN
-		var offset_y = 10 
+		var offset_y = 10
 		enemigo_agarrado.global_position = global_position + Vector2(offset_x, offset_y)
-		if enemigo_agarrado.has_node("AnimatedSprite2D"):
-			enemigo_agarrado.get_node("AnimatedSprite2D").flip_h = facing_left
+		if enemigo_agarrado.has_method("actualizar_movimiento_agarrado"):
+			enemigo_agarrado.actualizar_movimiento_agarrado(direction, facing_left)
 
 	update_animation(direction)
 	move_and_slide()
@@ -228,7 +284,7 @@ func _physics_process(delta):
 			texto_flecha.text = "F. Letal"
 		icono_flecha.play(tipo_flecha)
 
-# --- CAMBIAR ARMA CUERPO A CUERPO (R1 / RB) ---
+	# --- CAMBIAR ARMA CUERPO A CUERPO (R1 / RB) ---
 	if Input.is_action_just_pressed("cambiar_melee"):
 		if arma_cuerpo_a_cuerpo == "cuchillo":
 			arma_cuerpo_a_cuerpo = "puño"
@@ -247,9 +303,9 @@ func manejar_combo_ataque():
 		ejecutar_accion_bloqueante("combo_" + arma_cuerpo_a_cuerpo + "_1")
 		hitbox_shape.disabled = false
 	elif combo_paso == 1 and accion_bloqueante:
-		ataque_encolado = true 
+		ataque_encolado = true
 	elif combo_paso == 2 and accion_bloqueante:
-		ataque_encolado = true 
+		ataque_encolado = true
 
 func ejecutar_accion_bloqueante(nombre_animacion):
 	accion_bloqueante = true
@@ -258,42 +314,53 @@ func ejecutar_accion_bloqueante(nombre_animacion):
 func actualizar_trayectoria(delta):
 	linea_trayectoria.clear_points()
 	var vel_simulada = direccion_tiro * fuerza_arco
-	var pos_simulada = Vector2(5, 17.0) if not esta_acostado else Vector2(5, 22.0)
+	
+	# Mantiene tu altura 24.0 parado (y la baja un poquito solo si estás cuerpo a tierra)
+	if esta_acostado:
+		punto_disparo.position.y = 35.0
+	else:
+		punto_disparo.position.y = 35.0
+		
+	var pos_simulada = punto_disparo.position
 	linea_trayectoria.add_point(pos_simulada)
 	
-	var paso_tiempo = 0.05 
+	var paso_tiempo = 0.05
 	for i in range(30):
-		vel_simulada.y += gravity * paso_tiempo
+		vel_simulada.y += gravity_up * paso_tiempo
 		pos_simulada += vel_simulada * paso_tiempo
 		linea_trayectoria.add_point(pos_simulada)
 
 func disparar_flecha():
 	if flecha_escena:
 		var nueva_flecha = flecha_escena.instantiate()
-		var offset_y = 10.0 if not esta_acostado else 15.0
-		nueva_flecha.global_position = global_position + (direccion_tiro * 15.0) + Vector2(0, offset_y)
+		
+		# La flecha nace exactamente en la posición global del Marker2D
+		nueva_flecha.global_position = punto_disparo.global_position
 		nueva_flecha.velocity = direccion_tiro * fuerza_arco
 		nueva_flecha.tipo = tipo_flecha
+		
 		get_parent().add_child(nueva_flecha)
 
 func check_ledge_grab():
 	if not is_hanging and not floor_check.is_colliding() and not accion_bloqueante:
-		if wall_check.is_colliding() and is_on_floor():
+		if wall_check.is_colliding() and (is_on_floor() or abs(velocity.y) < 10.0) and velocity.y >= 0:
 			is_hanging = true
+			velocity = Vector2.ZERO
 
 func update_animation(direction):
 	anim.flip_h = facing_left
+	var offset_base_x = compensacion_sprite if facing_left else 0.0
 	
 	if not is_hanging and anim.animation != "trepa":
 		anim.offset.y = 0
-		anim.offset.x = 0 
+		anim.offset.x = offset_base_x
 		
 	if accion_bloqueante:
-		return 
+		return
 		
 	if is_hanging:
 		anim.offset.y = 5
-		anim.offset.x = 3
+		anim.offset.x = offset_base_x + (-5.0 if facing_left else 5.0)
 		anim.play("trepa")
 		anim.pause()
 		anim.frame = 0
@@ -301,9 +368,9 @@ func update_animation(direction):
 		anim.play("prepara_el_arco")
 	elif enemigo_agarrado != null:
 		if direction != 0:
-			anim.play("camina_con_enemigo_agarrado") 
+			anim.play("camina_con_enemigo_agarrado")
 		else:
-			anim.play("agarrar") 
+			anim.play("agarrar")
 	elif not is_on_floor():
 		if velocity.y < 0:
 			anim.play("salta_hacia_arriba")
@@ -330,17 +397,17 @@ func _on_animation_finished():
 	var terminada = anim.animation
 	
 	if "combo" in terminada or terminada == "mata_enemigo":
-		hitbox_shape.disabled = true 
+		hitbox_shape.disabled = true
 		
 	if terminada == "trepa":
 		var direccion = -1 if anim.flip_h else 1
 		
-		var empuje_x = 25 * direccion 
-		var subida_y = 12 
+		var empuje_x = 25 * direccion
+		var subida_y = 12
 		
 		global_position += Vector2(empuje_x, subida_y)
 		
-		anim.offset.x = 0
+		anim.offset.x = compensacion_sprite if facing_left else 0.0
 		anim.offset.y = 0
 		
 		accion_bloqueante = false
