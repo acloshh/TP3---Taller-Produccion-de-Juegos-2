@@ -1165,6 +1165,6 @@ position = Vector2(0, 16)
 target_position = Vector2(0, 60)
 
 [node name="RayVision" type="RayCast2D" parent="." unique_id=567702630]
-target_position = Vector2(127, 0)
+target_position = Vector2(252, 0)
 
 [node name="PointLight2D" type="PointLight2D" parent="." unique_id=1290345851]

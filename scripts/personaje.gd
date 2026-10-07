@@ -89,13 +89,19 @@ func _physics_process(delta):
 
 	var direction = Input.get_axis("mover_izq", "mover_der")
 
-	if Input.is_action_just_pressed("cambiar_postura") and not accion_bloqueante and enemigo_agarrado == null:
-		# Si está en sigilo, solo lo deja pararse si no hay techo arriba
-		if es_sigilo:
-			if not top_check.is_colliding():
-				es_sigilo = false
+	# --- CORRECCIÓN: LÓGICA DE BOTÓN B (DESMAYAR / SIGILO) ---
+	if Input.is_action_just_pressed("cambiar_postura") and not accion_bloqueante:
+		if enemigo_agarrado != null:
+			enemigo_agarrado.ser_desmayado()
+			popup_acciones.hide()
+			ejecutar_accion_bloqueante("desmaya_enemigo")
 		else:
-			es_sigilo = true
+			# Si NO tenemos rehén, el botón B nos cambia de postura (Sigilo)
+			if es_sigilo:
+				if not top_check.is_colliding():
+					es_sigilo = false
+			else:
+				es_sigilo = true
 
 	# Se mantiene acostado si aprieta abajo O si ya estaba acostado y tiene un techo encima
 	var quiere_acostarse = Input.is_action_pressed("abajo") and is_on_floor() and not is_hanging and not accion_bloqueante
@@ -136,10 +142,10 @@ func _physics_process(delta):
 			enemigo_agarrado = null
 			popup_acciones.hide()
 
+	# --- CORRECCIÓN: LÓGICA DE BOTÓN X (MATAR / ATACAR) ---
 	if Input.is_action_just_pressed("atacar") and not is_hanging:
 		if enemigo_agarrado != null:
-			enemigo_agarrado.ser_neutralizado()
-			enemigo_agarrado = null
+			enemigo_agarrado.ser_asesinado()
 			popup_acciones.hide()
 			ejecutar_accion_bloqueante("mata_enemigo")
 		elif not is_aiming:
@@ -370,7 +376,10 @@ func update_animation(direction):
 		if direction != 0:
 			anim.play("camina_con_enemigo_agarrado")
 		else:
-			anim.play("agarrar")
+			# Reproduce la animación pero la pausa en el frame 0 para simular el "Idle"
+			anim.play("camina_con_enemigo_agarrado")
+			anim.pause()
+			anim.frame = 0
 	elif not is_on_floor():
 		if velocity.y < 0:
 			anim.play("salta_hacia_arriba")
@@ -396,37 +405,28 @@ func update_animation(direction):
 func _on_animation_finished():
 	var terminada = anim.animation
 	
-	if "combo" in terminada or terminada == "mata_enemigo":
+	if "combo" in terminada:
 		hitbox_shape.disabled = true
 		
-	if terminada == "trepa":
-		var direccion = -1 if anim.flip_h else 1
-		
-		var empuje_x = 25 * direccion
-		var subida_y = 12
-		
-		global_position += Vector2(empuje_x, subida_y)
-		
-		anim.offset.x = compensacion_sprite if facing_left else 0.0
-		anim.offset.y = 0
-		
+	# NUEVO: Soltamos al enemigo RECIÉN cuando termina de apuñalarlo/asfixiarlo
+	if terminada == "mata_enemigo" or terminada == "desmaya_enemigo":
+		hitbox_shape.disabled = true
+		if enemigo_agarrado != null:
+			var es_muerte = (terminada == "mata_enemigo")
+			enemigo_agarrado.soltar_cuerpo(es_muerte)
+			enemigo_agarrado = null
 		accion_bloqueante = false
 		return
 		
-	if terminada == "combo_" + arma_cuerpo_a_cuerpo + "_1":
-		if ataque_encolado:
-			ataque_encolado = false
-			combo_paso = 2
-			ejecutar_accion_bloqueante("combo_" + arma_cuerpo_a_cuerpo + "_2")
-			hitbox_shape.disabled = false
-			return
-	elif terminada == "combo_" + arma_cuerpo_a_cuerpo + "_2":
-		if ataque_encolado:
-			ataque_encolado = false
-			combo_paso = 3
-			ejecutar_accion_bloqueante("combo_" + arma_cuerpo_a_cuerpo + "_3")
-			hitbox_shape.disabled = false
-			return
+	if terminada == "trepa":
+		var direccion = -1 if anim.flip_h else 1
+		var empuje_x = 25 * direccion
+		var subida_y = 12
+		global_position += Vector2(empuje_x, subida_y)
+		anim.offset.x = compensacion_sprite if facing_left else 0.0
+		anim.offset.y = 0
+		accion_bloqueante = false
+		return
 
 	accion_bloqueante = false
 	ataque_encolado = false
