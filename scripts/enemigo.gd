@@ -1,40 +1,62 @@
 extends CharacterBody2D
 
-enum Estado { PATRULLANDO, SOSPECHANDO, AGRESIVO, MUERTO, AGARRADO, DESMAYADO }
+enum Estado { PATRULLANDO, SOSPECHANDO, AGRESIVO, MUERTO, AGARRADO, DESMAYADO, LEVANTANDOSE, ESPERANDO_MARCADOR, SALTANDO, TREPANDO, CAYENDO_POR_AGUJERO }
+
+var timer_marcador = 0.0
+var orden_pendiente = 0
 var estado_actual = Estado.PATRULLANDO
 
 const SPEED_PATRULLA = 100.0
 const SPEED_SOSPECHA = 150
 const SPEED_PERSECUCION = 285.0
 
-var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
+# --- FÍSICAS PROPORCIONALES AL JUGADOR ---
+const JUMP_VELOCITY = -650.0 
+var gravity_up = 1800.0
+var gravity_down = 2200.0
 
 @onready var anim = $AnimatedSprite2D
 @onready var ray_muro = $RayMuro
 @onready var ray_piso = $RayPiso
 @onready var ray_vision = $RayVision
 
+@onready var wall_check = $WallCheck
+@onready var floor_check = $FloorCheck
+
 var direccion_x = 1
 var tiempo_sospecha = 0.0
+var tiempo_desmayado = 0.0 
 
 var vida = 3
 var esta_herido = false
+var tiene_gorro = true
+var compensacion_sprite = 0.0
+
+func _ready():
+	anim.animation_finished.connect(_on_animation_finished)
 
 func _physics_process(delta):
-	# Si está agarrado, el jugador controla su posición y no aplicamos gravedad ni movimiento
 	if estado_actual == Estado.AGARRADO:
 		return
 		
-	# La gravedad sigue afectando por si muere en el aire
-	if not is_on_floor():
-		velocity.y += gravity * delta
+	# Gravedad exacta a la de la cazadora
+	if not is_on_floor() and estado_actual != Estado.TREPANDO:
+		if velocity.y < 0:
+			velocity.y += gravity_up * delta
+		else:
+			velocity.y += gravity_down * delta
 
-	# Si está muerto o desmayado, aplicamos gravedad y cortamos la función acá mismo
-	if estado_actual == Estado.MUERTO or estado_actual == Estado.DESMAYADO:
+	if estado_actual in [Estado.MUERTO, Estado.LEVANTANDOSE]:
 		move_and_slide()
 		return
 
-	# --- EL RESTO DE TU CÓDIGO NORMAL SIGUE ACÁ ---
+	if estado_actual == Estado.DESMAYADO:
+		move_and_slide()
+		tiempo_desmayado += delta
+		if tiempo_desmayado >= 10.0: 
+			despertarse()
+		return
+
 	match estado_actual:
 		Estado.PATRULLANDO:
 			comportamiento_patrulla()
@@ -42,19 +64,43 @@ func _physics_process(delta):
 			comportamiento_sospecha(delta)
 		Estado.AGRESIVO:
 			comportamiento_agresivo()
+		Estado.ESPERANDO_MARCADOR:
+			velocity.x = 0
+			timer_marcador -= delta
+			if timer_marcador <= 0:
+				if orden_pendiente == 2:
+					dar_vuelta()
+				estado_actual = Estado.PATRULLANDO
+		Estado.SALTANDO:
+			velocity.x = direccion_x * SPEED_PATRULLA
+			check_ledge_grab()
+			if is_on_floor() and velocity.y >= 0:
+				estado_actual = Estado.PATRULLANDO
+		Estado.TREPANDO:
+			velocity.x = 20
+			velocity.y = -50
+		Estado.CAYENDO_POR_AGUJERO:
+			# Lo hacemos caminar hacia adelante ignorando el ray_piso
+			velocity.x = direccion_x * SPEED_PATRULLA
+			
+			# Si dejó de tocar el piso, activamos la bandera de que está en el aire
+			if not is_on_floor():
+				orden_pendiente = 1 
+				
+			# Si vuelve a tocar el piso Y ya estuvo en el aire, significa que aterrizó abajo
+			if is_on_floor() and orden_pendiente == 1:
+				estado_actual = Estado.PATRULLANDO
 
 	move_and_slide()
 	actualizar_animaciones()
 
 func comportamiento_patrulla():
-	# 1. Detección Visual (Alerta Roja inmediata si te ve de frente)
 	if ray_vision.is_colliding():
 		var colision = ray_vision.get_collider()
 		if colision and colision.is_in_group("jugador"):
 			estado_actual = Estado.AGRESIVO
-			return # Cortamos la ejecución acá para que deje de patrullar
+			return 
 
-	# 2. Detección por Proximidad (Alerta Amarilla si te ponés al lado)
 	var jugador = get_tree().get_first_node_in_group("jugador")
 	if jugador:
 		var distancia = global_position.distance_to(jugador.global_position)
@@ -63,25 +109,21 @@ func comportamiento_patrulla():
 			tiempo_sospecha = 0.0
 			return
 
-	# 3. Patrullaje normal
 	if ray_muro.is_colliding() or not ray_piso.is_colliding():
 		dar_vuelta()
 		
 	velocity.x = direccion_x * SPEED_PATRULLA
 
 func comportamiento_sospecha(delta):
-	# Se queda quieto mirando/buscando
 	velocity.x = direccion_x * SPEED_SOSPECHA
 	tiempo_sospecha += delta
 	
-	# Si mientras sospecha, te cruzás por su visión, se pone agresivo
 	if ray_vision.is_colliding():
 		var colision = ray_vision.get_collider()
 		if colision and colision.is_in_group("jugador"):
 			estado_actual = Estado.AGRESIVO
 			return
 	
-	# Después de 2 segundos, si no vio nada, vuelve a patrullar
 	if tiempo_sospecha >= 2.0:
 		estado_actual = Estado.PATRULLANDO
 		tiempo_sospecha = 0.0
@@ -90,15 +132,12 @@ func comportamiento_agresivo():
 	var jugador = get_tree().get_first_node_in_group("jugador")
 	
 	if jugador:
-		# Persigue al jugador
 		velocity.x = direccion_x * SPEED_PERSECUCION
 		
-		# Si el jugador lo salta y le queda en la espalda, el enemigo se da vuelta
 		var dir_hacia_jugador = sign(jugador.global_position.x - global_position.x)
 		if dir_hacia_jugador != 0 and dir_hacia_jugador != direccion_x:
 			dar_vuelta()
 			
-		# Si te alejás mucho (más de 200px), pierde el rastro y pasa a sospecha
 		var distancia = global_position.distance_to(jugador.global_position)
 		if distancia > 200.0:
 			estado_actual = Estado.SOSPECHANDO
@@ -106,106 +145,220 @@ func comportamiento_agresivo():
 
 func dar_vuelta():
 	direccion_x *= -1
-	
-	# Invertimos la dirección física de todos los sensores
 	ray_muro.target_position.x *= -1
 	ray_piso.position.x *= -1
 	ray_vision.target_position.x *= -1
+	
+	wall_check.target_position.x *= -1
+	floor_check.target_position.x *= -1 # FIX: Antes decía position.x
+
+func reproducir_animacion(nombre_animacion):
+	if tiene_gorro:
+		anim.play(nombre_animacion)
+	else:
+		anim.play(nombre_animacion + "_sin_gorro")
 
 func actualizar_animaciones():
 	anim.flip_h = (direccion_x < 0)
+	var offset_base_x = compensacion_sprite if (direccion_x < 0) else 0.0
 	
-	# Si está reproduciendo la animación de daño, cortamos la función acá
-	if esta_herido:
+	if estado_actual != Estado.TREPANDO:
+		anim.offset.y = 0
+		anim.offset.x = offset_base_x
+	
+	if esta_herido or estado_actual == Estado.TREPANDO:
 		return
 	
 	match estado_actual:
 		Estado.PATRULLANDO:
-			anim.play("patrulla_camina")
+			reproducir_animacion("idle" if velocity.x == 0 else "patrulla_camina")
 		Estado.SOSPECHANDO:
-			anim.play("curioso_camina")
+			reproducir_animacion("curioso_camina")
 		Estado.AGRESIVO:
-			anim.play("corre_y_ataca")
-		Estado.AGARRADO:
-			anim.play("agarrado")
-		Estado.DESMAYADO:
-			anim.play("desmayado_idle")
-
-func forzar_sospecha():
-	if estado_actual == Estado.PATRULLANDO:
-		estado_actual = Estado.SOSPECHANDO
-		tiempo_sospecha = 0.0
+			reproducir_animacion("corre_y_ataca")
+		Estado.ESPERANDO_MARCADOR:
+			reproducir_animacion("mira_derecha_izquierda_patrulla")
+		Estado.SALTANDO:
+			if velocity.y < 0:
+				reproducir_animacion("salta")
+			else:
+				reproducir_animacion("cae")
+		Estado.CAYENDO_POR_AGUJERO:
+			# Camina normal hacia el borde, y cuando cae reproduce la animación de caída
+			if is_on_floor():
+				reproducir_animacion("patrulla_camina")
+			else:
+				reproducir_animacion("cae")
 
 func recibir_dano():
-	if estado_actual == Estado.MUERTO or estado_actual == Estado.DESMAYADO:
+	if estado_actual == Estado.TREPANDO:
+		$CollisionShape2D.set_deferred("disabled", false)
+		
+	if estado_actual in [Estado.MUERTO, Estado.DESMAYADO, Estado.LEVANTANDOSE]:
 		return
 		
 	vida -= 1
-	
 	if vida <= 0:
 		estado_actual = Estado.MUERTO
 		velocity.x = 0
-		anim.play("danio_cae_al_suelo")
+		reproducir_animacion("danio_cae_al_suelo")
 		await anim.animation_finished
-		queue_free()
+		reproducir_animacion("muerto") 
+		set_physics_process(false) 
 	else:
-		esta_herido = true # Bloqueamos otras animaciones
-		estado_actual = Estado.AGRESIVO # Se enoja porque le disparaste
-		velocity.x = 0 # Opcional: hacemos que el golpe lo frene un instante
-		
-		anim.play("recibe_danio")
-		await anim.animation_finished # Esperamos que termine la animación
-		
-		esta_herido = false # Liberamos las animaciones de nuevo
-
-# --- FUNCIONES DE SIGILO Y REHÉN ---
+		esta_herido = true 
+		estado_actual = Estado.AGRESIVO 
+		velocity.x = 0 
+		reproducir_animacion("recibe_danio")
+		await anim.animation_finished 
+		esta_herido = false 
 
 func puede_recibir_takedown(posicion_jugador_x):
-	# No se deja agarrar si ya está en combate, muerto, agarrado o desmayado
-	if estado_actual == Estado.AGRESIVO or estado_actual == Estado.MUERTO or estado_actual == Estado.AGARRADO or estado_actual == Estado.DESMAYADO:
+	if estado_actual in [Estado.AGRESIVO, Estado.MUERTO, Estado.AGARRADO, Estado.DESMAYADO, Estado.LEVANTANDOSE, Estado.TREPANDO, Estado.CAYENDO_POR_AGUJERO]:
 		return false
-		
-	# Chequea si el jugador está a sus espaldas
 	if direccion_x == 1 and posicion_jugador_x < global_position.x:
 		return true
 	elif direccion_x == -1 and posicion_jugador_x > global_position.x:
 		return true
-		
 	return false
 
 func ser_agarrado():
 	estado_actual = Estado.AGARRADO
-	# Apagamos colisión para que lo puedas arrastrar sin que choque
 	$CollisionShape2D.set_deferred("disabled", true)
 	velocity = Vector2.ZERO
-	anim.play("agarrado")
+	reproducir_animacion("agarrado")
 
 func soltar_agarre():
 	estado_actual = Estado.DESMAYADO
+	tiene_gorro = false
+	tiempo_desmayado = 0.0
 	velocity.x = 0
-	# Volvemos a prender la colisión para que caiga contra el piso
 	$CollisionShape2D.set_deferred("disabled", false)
-	anim.play("desmayado_idle")
+	reproducir_animacion("desmayado_idle")
+
+func ser_desmayado():
+	estado_actual = Estado.DESMAYADO
+	tiene_gorro = false
+	reproducir_animacion("agarrado_desmayando")
+	await anim.animation_finished
+	if estado_actual == Estado.DESMAYADO:
+		reproducir_animacion("agarrado_desmayando_mantener")
+
+func ser_asesinado():
+	estado_actual = Estado.MUERTO
+	reproducir_animacion("agarrado_matar")
+
+func soltar_cuerpo(es_muerte):
+	set_physics_process(true)
+	$CollisionShape2D.set_deferred("disabled", false)
+	if es_muerte:
+		reproducir_animacion("muerto")
+	else:
+		tiempo_desmayado = 0.0
+		reproducir_animacion("agarrado_desmayado_cae_al_suelo")
+		await anim.animation_finished
+		if estado_actual == Estado.DESMAYADO:
+			reproducir_animacion("desmayado_idle")
+
+func actualizar_movimiento_agarrado(direccion_jugador, facing_left_jugador):
+	if estado_actual == Estado.MUERTO or estado_actual == Estado.DESMAYADO:
+		return 
+	anim.flip_h = facing_left_jugador
+	if direccion_jugador != 0:
+		reproducir_animacion("agarrado_camina")
+	else:
+		reproducir_animacion("agarrado")
 
 func ser_neutralizado():
 	estado_actual = Estado.MUERTO
 	velocity = Vector2.ZERO
-	anim.play("agarrado_matar")
+	reproducir_animacion("agarrado_matar")
 	await anim.animation_finished
-	queue_free()
+	reproducir_animacion("muerto")
+	set_physics_process(false)
 	
 func recibir_flechazo(tipo_flecha):
-	if estado_actual == Estado.MUERTO or estado_actual == Estado.DESMAYADO:
+	if estado_actual == Estado.TREPANDO:
+		$CollisionShape2D.set_deferred("disabled", false)
+		
+	if estado_actual in [Estado.MUERTO, Estado.DESMAYADO, Estado.LEVANTANDOSE]:
 		return
 		
 	if tipo_flecha == "letal":
 		estado_actual = Estado.MUERTO
 		velocity.x = 0
-		anim.play("danio_cae_al_suelo")
+		reproducir_animacion("danio_cae_al_suelo")
 		await anim.animation_finished
-		queue_free()
+		reproducir_animacion("muerto")
+		set_physics_process(false)
 	elif tipo_flecha == "desmayante":
 		estado_actual = Estado.DESMAYADO
+		tiene_gorro = false
+		tiempo_desmayado = 0.0
 		velocity.x = 0
 		$CollisionShape2D.set_deferred("disabled", false)
-		anim.play("desmayado_idle")
+		reproducir_animacion("desmayado_idle")
+
+func despertarse():
+	estado_actual = Estado.LEVANTANDOSE
+	tiempo_desmayado = 0.0
+	anim.play("empieza_a_levantarse")
+	await anim.animation_finished
+	anim.play("mira_izquierda_derecha_levantandose")
+	await anim.animation_finished
+	anim.play("se_levanta")
+	await anim.animation_finished
+	estado_actual = Estado.SOSPECHANDO
+	tiempo_sospecha = 0.0
+
+func recibir_orden_marcador(orden, tiempo):
+	if estado_actual != Estado.PATRULLANDO:
+		return
+	if orden == 0:
+		dar_vuelta()
+	elif orden == 1:
+		estado_actual = Estado.ESPERANDO_MARCADOR
+		timer_marcador = tiempo
+		orden_pendiente = 1
+	elif orden == 2:
+		estado_actual = Estado.ESPERANDO_MARCADOR
+		timer_marcador = tiempo
+		orden_pendiente = 2
+	elif orden == 3: 
+		estado_actual = Estado.SALTANDO
+		velocity.y = JUMP_VELOCITY
+	elif orden == 4:
+		# NUEVA ORDEN: Caer por la cornisa
+		estado_actual = Estado.CAYENDO_POR_AGUJERO
+		orden_pendiente = 0 # Usamos esto como bandera: 0 = todavía está en la plataforma
+
+func check_ledge_grab():
+	if wall_check.is_colliding() and not floor_check.is_colliding() and velocity.y >= 0:
+		ejecutar_trepada()
+
+func ejecutar_trepada():
+	estado_actual = Estado.TREPANDO
+	velocity = Vector2.ZERO
+	
+	$CollisionShape2D.set_deferred("disabled", true)
+	
+	anim.offset.y = 2
+	anim.offset.x = 0
+
+	reproducir_animacion("trepa_esquina")
+	anim.frame = 0
+
+func _on_animation_finished():
+	var terminada = anim.animation
+	
+	if terminada == "trepa_esquina" or terminada == "trepa_esquina_sin_gorro":
+		var empuje_x = 50 * direccion_x
+		var subida_y = 0 
+		
+		global_position += Vector2(empuje_x, subida_y)
+		
+		anim.offset.x = compensacion_sprite if (direccion_x < 0) else 0.0
+		anim.offset.y = 0
+		
+		$CollisionShape2D.set_deferred("disabled", false)
+		estado_actual = Estado.PATRULLANDO

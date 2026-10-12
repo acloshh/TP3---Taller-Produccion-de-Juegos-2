@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dffufpal5ry55"
-path="res://.godot/imported/PlayerWalk 48x48.png-486dc6ead7ca9a53f57550137f21314c.ctex"
+uid="uid://3ujh7xjhmuha"
+path="res://.godot/imported/WhatsApp Image 2026-09-23 at 11.11.27 AM.jpeg-7bcd98d3065ea92751f14c0f56dccef1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/MOVIMIENTOS/Walk/PlayerWalk 48x48.png"
-dest_files=["res://.godot/imported/PlayerWalk 48x48.png-486dc6ead7ca9a53f57550137f21314c.ctex"]
+source_file="res://assets/diseño de niveles (boceto)/WhatsApp Image 2026-09-23 at 11.11.27 AM.jpeg"
+dest_files=["res://.godot/imported/WhatsApp Image 2026-09-23 at 11.11.27 AM.jpeg-7bcd98d3065ea92751f14c0f56dccef1.ctex"]
 
 [params]
 

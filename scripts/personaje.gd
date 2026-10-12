@@ -97,6 +97,9 @@ func _physics_process(delta):
 		else:
 			es_sigilo = true
 
+	if Input.is_physical_key_pressed(KEY_R):
+		get_tree().reload_current_scene()
+
 	# Se mantiene acostado si aprieta abajo O si ya estaba acostado y tiene un techo encima
 	var quiere_acostarse = Input.is_action_pressed("abajo") and is_on_floor() and not is_hanging and not accion_bloqueante
 	var bloqueado_acostado = esta_acostado and top_check.is_colliding()
@@ -123,7 +126,8 @@ func _physics_process(delta):
 		if enemigo_agarrado == null:
 			var cuerpos = area_takedown.get_overlapping_bodies()
 			for cuerpo in cuerpos:
-				if cuerpo.is_in_group("enemigo") and cuerpo.has_method("puede_recibir_takedown"):
+				# FIX: is_inside_tree() para que no agarre fantasmas (soluciona el get_space null)
+				if cuerpo.is_in_group("enemigo") and cuerpo.is_inside_tree() and cuerpo.has_method("puede_recibir_takedown"):
 					if cuerpo.puede_recibir_takedown(global_position.x):
 						enemigo_agarrado = cuerpo
 						enemigo_agarrado.ser_agarrado()
@@ -165,9 +169,12 @@ func _physics_process(delta):
 		if Input.is_action_pressed("disparar"):
 			fuerza_arco += 600 * delta
 			fuerza_arco = clamp(fuerza_arco, 50.0, 800.0)
-			actualizar_trayectoria(delta) # Muestra la línea mientras tensa
+			# FIX: Quitamos 'delta' acá también
+			actualizar_trayectoria() 
 		else:
-			linea_trayectoria.clear_points() # Oculta la línea si solo está apuntando sin tensar
+			# FIX: Validamos antes de borrar para evitar el index out of bounds
+			if linea_trayectoria.get_point_count() > 0:
+				linea_trayectoria.clear_points() 
 			
 		# 3. Disparar al soltar R2
 		if Input.is_action_just_released("disparar"):
@@ -178,7 +185,9 @@ func _physics_process(delta):
 	elif Input.is_action_just_released("apuntar") and is_aiming:
 		is_aiming = false
 		fuerza_arco = 50.0
-		linea_trayectoria.clear_points()
+		# FIX: Validamos antes de borrar
+		if linea_trayectoria.get_point_count() > 0:
+			linea_trayectoria.clear_points()
 
 # --- ORIENTAR ÁREAS Y RAYOS ---
 	if facing_left:
@@ -311,8 +320,12 @@ func ejecutar_accion_bloqueante(nombre_animacion):
 	accion_bloqueante = true
 	anim.play(nombre_animacion)
 
-func actualizar_trayectoria(delta):
-	linea_trayectoria.clear_points()
+# FIX: Borramos el parámetro 'delta' de la función
+func actualizar_trayectoria():
+	# FIX: Agregamos validación antes de borrar
+	if linea_trayectoria.get_point_count() > 0:
+		linea_trayectoria.clear_points()
+		
 	var vel_simulada = direccion_tiro * fuerza_arco
 	
 	# Mantiene tu altura 24.0 parado (y la baja un poquito solo si estás cuerpo a tierra)

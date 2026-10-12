@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://dtaete1nxlofb"]
+
+[ext_resource type="Script" uid="uid://dlshigh1n0tyo" path="res://scripts/marcador_patrulla.gd" id="1_u4fgx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u4fgx"]
+
+[node name="MarcadorPatrulla" type="Area2D" unique_id=1359637785]
+collision_mask = 4
+script = ExtResource("1_u4fgx")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1206258913]
+shape = SubResource("RectangleShape2D_u4fgx")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

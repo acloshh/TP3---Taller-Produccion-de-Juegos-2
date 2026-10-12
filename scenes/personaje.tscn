@@ -1184,6 +1184,7 @@ outline_size = 1
 outline_color = Color(0, 0, 0, 1)
 
 [node name="personaje" type="CharacterBody2D" unique_id=556512266 groups=["jugador"]]
+collision_layer = 2
 script = ExtResource("1_ho3dl")
 flecha_escena = ExtResource("2_b1pmb")
 metadata/_edit_horizontal_guides_ = [45.0, 4.0]
@@ -1226,16 +1227,18 @@ target_position = Vector2(0, 0)
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1291885301]
 position = Vector2(0, 3)
 limit_left = 0
-limit_top = 0
+limit_top = -400
 limit_bottom = 1080
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=379042747]
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=186070358]
 position = Vector2(41.125, 37.5)
 shape = SubResource("RectangleShape2D_n1ehy")
 
 [node name="AreaTakedown" type="Area2D" parent="." unique_id=1185697625]
+collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AreaTakedown" unique_id=1204164352]
 position = Vector2(0, 17)

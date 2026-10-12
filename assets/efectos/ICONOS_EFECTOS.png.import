@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cmd3fe03qmp78"
-path="res://.godot/imported/Player Idle 48x48 IZQ.png-7be38b0507644169caeab519e89cb6cc.ctex"
+uid="uid://ngccxay0kbuf"
+path="res://.godot/imported/ICONOS_EFECTOS.png-bb8b03c15d9db9e8e499cf067e33b011.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/MOVIMIENTOS/Idle/Player Idle 48x48 IZQ.png"
-dest_files=["res://.godot/imported/Player Idle 48x48 IZQ.png-7be38b0507644169caeab519e89cb6cc.ctex"]
+source_file="res://assets/efectos/ICONOS_EFECTOS.png"
+dest_files=["res://.godot/imported/ICONOS_EFECTOS.png-bb8b03c15d9db9e8e499cf067e33b011.ctex"]
 
 [params]
 
