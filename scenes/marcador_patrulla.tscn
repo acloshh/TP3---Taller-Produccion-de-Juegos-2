@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://dtaete1nxlofb"]
 
+<<<<<<< HEAD
 [ext_resource type="Script" uid="uid://dlshigh1n0tyo" path="res://scripts/marcador_patrulla.gd" id="1_u4fgx"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u4fgx"]
@@ -12,3 +13,18 @@ script = ExtResource("1_u4fgx")
 shape = SubResource("RectangleShape2D_u4fgx")
 
 [connection signal="body_entered" from="." to="." method="_on_body_entered"]
+=======
+[ext_resource type="Script" uid="uid://cjbafj2wwqsd7" path="res://scripts/marcador_patrulla.gd" id="1_u4fgx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7d8la"]
+size = Vector2(3, 20)
+
+[node name="MarcadorPatrulla" type="Area2D" unique_id=457579462]
+script = ExtResource("1_u4fgx")
+tipo_accion = null
+tiempo_espera = null
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1969634718]
+modulate = Color(0, 1, 0, 1)
+shape = SubResource("RectangleShape2D_7d8la")
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93

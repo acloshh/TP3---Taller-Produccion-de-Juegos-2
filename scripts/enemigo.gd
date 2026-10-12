@@ -29,11 +29,16 @@ var tiempo_desmayado = 0.0
 
 var vida = 3
 var esta_herido = false
+<<<<<<< HEAD
 var tiene_gorro = true
 var compensacion_sprite = 0.0
 
 func _ready():
 	anim.animation_finished.connect(_on_animation_finished)
+=======
+var en_pausa_patrulla = false
+var tiempo_pausa = 0.0
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
 
 func _physics_process(delta):
 	if estado_actual == Estado.AGARRADO:
@@ -59,7 +64,7 @@ func _physics_process(delta):
 
 	match estado_actual:
 		Estado.PATRULLANDO:
-			comportamiento_patrulla()
+			comportamiento_patrulla(delta)
 		Estado.SOSPECHANDO:
 			comportamiento_sospecha(delta)
 		Estado.AGRESIVO:
@@ -94,13 +99,24 @@ func _physics_process(delta):
 	move_and_slide()
 	actualizar_animaciones()
 
+<<<<<<< HEAD
 func comportamiento_patrulla():
+=======
+func comportamiento_patrulla(delta):
+	# 1. Detección Visual... (tu código sigue igual)
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
 	if ray_vision.is_colliding():
 		var colision = ray_vision.get_collider()
 		if colision and colision.is_in_group("jugador"):
 			estado_actual = Estado.AGRESIVO
+<<<<<<< HEAD
 			return 
 
+=======
+			return
+
+	# 2. Detección por Proximidad... (tu código sigue igual)
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
 	var jugador = get_tree().get_first_node_in_group("jugador")
 	if jugador:
 		var distancia = global_position.distance_to(jugador.global_position)
@@ -109,10 +125,24 @@ func comportamiento_patrulla():
 			tiempo_sospecha = 0.0
 			return
 
+<<<<<<< HEAD
+=======
+	# --- NUEVO: Chequeo de pausa ---
+	if en_pausa_patrulla:
+		velocity.x = 0
+		tiempo_pausa -= delta
+		if tiempo_pausa <= 0:
+			en_pausa_patrulla = false
+		return # Cortamos la función acá para que se quede en idle
+	# -------------------------------
+
+	# 3. Patrullaje normal
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
 	if ray_muro.is_colliding() or not ray_piso.is_colliding():
 		dar_vuelta()
 		
 	velocity.x = direccion_x * SPEED_PATRULLA
+
 
 func comportamiento_sospecha(delta):
 	velocity.x = direccion_x * SPEED_SOSPECHA
@@ -223,16 +253,47 @@ func puede_recibir_takedown(posicion_jugador_x):
 	return false
 
 func ser_agarrado():
+<<<<<<< HEAD
 	estado_actual = Estado.AGARRADO
 	$CollisionShape2D.set_deferred("disabled", true)
 	velocity = Vector2.ZERO
 	reproducir_animacion("agarrado")
+=======
+	velocity = Vector2.ZERO
+	set_physics_process(false)
+	# APAGAMOS LA COLISIÓN para que no empuje al jugador (usamos set_deferred por seguridad del motor)
+	$CollisionShape2D.set_deferred("disabled", true) 
+	anim.play("agarrado")
+	
+func actualizar_movimiento_agarrado(direccion_jugador, facing_left_jugador):
+	# PROTECCIÓN: Si lo estamos matando o desmayando, ignoramos este bloque para no romper la animación
+	if estado_actual == Estado.MUERTO or estado_actual == Estado.DESMAYADO:
+		return 
+		
+	anim.flip_h = facing_left_jugador
+	if direccion_jugador != 0:
+		anim.play("agarrado_camina")
+	else:
+		anim.play("agarrado")
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
 
-func soltar_agarre():
+func ser_desmayado():
 	estado_actual = Estado.DESMAYADO
+<<<<<<< HEAD
 	tiene_gorro = false
 	tiempo_desmayado = 0.0
 	velocity.x = 0
+=======
+	anim.play("agarrado_desmayando")
+
+func ser_asesinado():
+	estado_actual = Estado.MUERTO
+	anim.play("agarrado_matar")
+	
+func soltar_agarre():
+	set_physics_process(true)
+	# PRENDEMOS LA COLISIÓN si lo volvés a soltar vivo con el mismo botón
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
 	$CollisionShape2D.set_deferred("disabled", false)
 	reproducir_animacion("desmayado_idle")
 
@@ -269,6 +330,15 @@ func actualizar_movimiento_agarrado(direccion_jugador, facing_left_jugador):
 	else:
 		reproducir_animacion("agarrado")
 
+func soltar_cuerpo(es_muerte):
+	# Recién acá le devolvemos el peso y la colisión para que caiga rendido al piso
+	set_physics_process(true)
+	$CollisionShape2D.set_deferred("disabled", false)
+	if es_muerte:
+		anim.play("muerto")
+	else:
+		anim.play("desmayado_idle")
+
 func ser_neutralizado():
 	estado_actual = Estado.MUERTO
 	velocity = Vector2.ZERO
@@ -297,6 +367,7 @@ func recibir_flechazo(tipo_flecha):
 		tiempo_desmayado = 0.0
 		velocity.x = 0
 		$CollisionShape2D.set_deferred("disabled", false)
+<<<<<<< HEAD
 		reproducir_animacion("desmayado_idle")
 
 func despertarse():
@@ -362,3 +433,24 @@ func _on_animation_finished():
 		
 		$CollisionShape2D.set_deferred("disabled", false)
 		estado_actual = Estado.PATRULLANDO
+=======
+		anim.play("desmayado_idle")
+
+func ejecutar_marcador(accion, tiempo):
+	# Solo le hace caso al marcador si está tranquilo patrullando
+	if estado_actual != Estado.PATRULLANDO:
+		return
+		
+	if accion == 0: # DAR_VUELTA
+		dar_vuelta()
+	elif accion == 1: # ESPERAR_Y_SEGUIR
+		en_pausa_patrulla = true
+		tiempo_pausa = tiempo
+		velocity.x = 0
+	elif accion == 2: # ESPERAR_Y_DAR_VUELTA
+		en_pausa_patrulla = true
+		tiempo_pausa = tiempo
+		velocity.x = 0
+		dar_vuelta()
+		
+>>>>>>> 80fe6122fffa3be2ece166997223f305f06a8b93
