@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b82plo2gvdid8"]
+
+[ext_resource type="Script" path="res://scripts/marcador_patrulla.gd" id="1_vaxtn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nfhhh"]
+size = Vector2(20, 623)
+
+[node name="MarcadorEscalera" type="Area2D" unique_id=990370329]
+collision_mask = 4
+script = ExtResource("1_vaxtn")
+orden = 5
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1529290320]
+position = Vector2(0, 211.5)
+shape = SubResource("RectangleShape2D_nfhhh")

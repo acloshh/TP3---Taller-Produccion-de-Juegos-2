@@ -1981,6 +1981,7 @@ animations = [{
 }]
 
 [node name="enemigo" type="CharacterBody2D" unique_id=191067378 groups=["enemigo"]]
+z_index = 2
 collision_layer = 4
 script = ExtResource("1_hlx46")
 
@@ -1991,8 +1992,7 @@ shape = SubResource("RectangleShape2D_7kcpm")
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=414446969]
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_5jixv")
-animation = &"trepa_esquina"
-frame = 2
+animation = &"trepa_escalera"
 flip_h = true
 
 [node name="RayMuro" type="RayCast2D" parent="." unique_id=1750972249]
