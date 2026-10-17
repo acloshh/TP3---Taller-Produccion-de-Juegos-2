@@ -11,8 +11,9 @@ func _ready():
 
 func _on_body_entered(body):
 	if body.is_in_group("enemigo") and body.has_method("recibir_orden_marcador"):
-		body.recibir_orden_marcador(orden, tiempo_de_espera)
-
+		# Le pasamos la orden, el tiempo, y AHORA TAMBIÉN el centro exacto del marcador
+		body.recibir_orden_marcador(orden, tiempo_de_espera, global_position.x)
+		
 func _on_body_exited(body):
 	# Si la orden es 5 (Subir) o 6 (Bajar), le avisamos que ya salió del área de la escalera
 	if orden == 5 or orden == 6:

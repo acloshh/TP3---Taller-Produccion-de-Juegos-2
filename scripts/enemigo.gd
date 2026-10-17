@@ -18,6 +18,7 @@ var gravity_down = 2200.0
 # --- VARIABLES DE ESCALERA ---
 const SPEED_ESCALERA = 60.0
 var direccion_escalera = -1
+var ancho_colision_original = 0.0 # <-- NUEVO: Para guardar el ancho normal
 
 @onready var anim = $AnimatedSprite2D
 @onready var ray_muro = $RayMuro
@@ -38,6 +39,10 @@ var compensacion_sprite = 0.0
 
 func _ready():
 	anim.animation_finished.connect(_on_animation_finished)
+	
+	# Hace única la colisión y guarda su tamaño gordo original
+	$CollisionShape2D.shape = $CollisionShape2D.shape.duplicate()
+	ancho_colision_original = $CollisionShape2D.shape.size.x
 
 func _physics_process(delta):
 	if estado_actual == Estado.AGARRADO:
@@ -116,7 +121,10 @@ func comportamiento_patrulla(_delta):
 			tiempo_sospecha = 0.0
 			return
 
-	if ray_muro.is_colliding() or not ray_piso.is_colliding():
+	# --- CORRECCIÓN: Evita el temblor en el aire ---
+	if ray_muro.is_colliding():
+		dar_vuelta()
+	elif is_on_floor() and not ray_piso.is_colliding():
 		dar_vuelta()
 		
 	velocity.x = direccion_x * SPEED_PATRULLA
@@ -312,7 +320,7 @@ func despertarse():
 	estado_actual = Estado.SOSPECHANDO
 	tiempo_sospecha = 0.0
 
-func recibir_orden_marcador(orden, tiempo):
+func recibir_orden_marcador(orden, tiempo, pos_x_marcador = 0.0):
 	if estado_actual != Estado.PATRULLANDO:
 		return
 	if orden == 0:
@@ -334,9 +342,13 @@ func recibir_orden_marcador(orden, tiempo):
 	elif orden == 5: # Subir Escalera
 		estado_actual = Estado.EN_ESCALERA
 		direccion_escalera = -1
+		$CollisionShape2D.shape.size.x = 14.0 # Lo hacemos finito
+		global_position.x = pos_x_marcador # <-- IMÁN AL CENTRO
 	elif orden == 6: # Bajar Escalera
 		estado_actual = Estado.EN_ESCALERA
 		direccion_escalera = 1
+		$CollisionShape2D.shape.size.x = 14.0 # Lo hacemos finito
+		global_position.x = pos_x_marcador # <-- IMÁN AL CENTRO
 
 func check_ledge_grab():
 	if is_on_wall() and wall_check.is_colliding() and not floor_check.is_colliding() and velocity.y >= 0:
@@ -356,8 +368,17 @@ func ejecutar_trepada():
 
 func soltar_escalera():
 	if estado_actual == Estado.EN_ESCALERA:
-		estado_actual = Estado.PATRULLANDO
-		velocity.y = 0
+		# Le devolvemos su caja ancha original para patrullar
+		$CollisionShape2D.shape.size.x = ancho_colision_original
+		
+		# Si terminó de subir, pega un pequeño salto hacia adelante para subirse a la plataforma
+		if direccion_escalera == -1: 
+			estado_actual = Estado.SALTANDO
+			velocity.y = JUMP_VELOCITY * 0.4
+		# Si terminó de bajar, simplemente pisa el piso y sigue patrullando
+		else: 
+			estado_actual = Estado.PATRULLANDO
+			velocity.y = 0
 
 func _on_animation_finished():
 	var terminada = anim.animation
