@@ -4,10 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://dhm6qwamvrib7" path="res://scenes/flecha.tscn" id="2_b1pmb"]
 [ext_resource type="Texture2D" uid="uid://dc1ubrjs1sx4r" path="res://assets/bicha/spritesheet personaje principal.png" id="3_4h8dm"]
 [ext_resource type="FontFile" uid="uid://dokcmbnan13ri" path="res://fonts/PressStart2P.ttf" id="3_xvalt"]
+[ext_resource type="Texture2D" uid="uid://ngccxay0kbuf" path="res://assets/efectos/ICONOS_EFECTOS.png" id="6_4w6sy"]
 [ext_resource type="Texture2D" uid="uid://b2iu332v6d4gl" path="res://assets/flecha/puntos.png" id="7_4h8dm"]
-[ext_resource type="Texture2D" uid="uid://ctnlyglk1ukm5" path="res://assets/UI/images.png" id="7_4w6sy"]
-[ext_resource type="Texture2D" uid="uid://qenb2apu8mfn" path="res://assets/UI/knife_pack/knife_bloody.png" id="8_ink26"]
-[ext_resource type="Texture2D" uid="uid://cccuhv2uq6ape" path="res://assets/flecha/Arrows_pack.png" id="8_rdnqt"]
 [ext_resource type="FontFile" uid="uid://beo32a2h43lqy" path="res://fonts/Minecraft.ttf" id="9_4w6sy"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4h8dm"]
@@ -121,6 +119,22 @@ region = Rect2(480, 96, 32, 32)
 [sub_resource type="AtlasTexture" id="AtlasTexture_6ynet"]
 atlas = ExtResource("3_4h8dm")
 region = Rect2(0, 128, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_klnk8"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(480, 288, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5en2p"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(0, 320, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_81ry3"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(32, 320, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_06i0h"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(64, 320, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_rdnqt"]
 atlas = ExtResource("3_4h8dm")
@@ -330,6 +344,14 @@ region = Rect2(416, 224, 32, 32)
 atlas = ExtResource("3_4h8dm")
 region = Rect2(448, 224, 32, 32)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_nfy6j"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(160, 352, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kl0ny"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(192, 352, 32, 32)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_7ayym"]
 atlas = ExtResource("3_4h8dm")
 region = Rect2(352, 64, 32, 32)
@@ -482,6 +504,22 @@ region = Rect2(64, 256, 32, 32)
 atlas = ExtResource("3_4h8dm")
 region = Rect2(96, 256, 32, 32)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_0jbny"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(160, 128, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q7edq"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(192, 128, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_01337"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(224, 128, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_noga5"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(256, 128, 32, 32)
+
 [sub_resource type="AtlasTexture" id="AtlasTexture_a2dq0"]
 atlas = ExtResource("3_4h8dm")
 region = Rect2(256, 288, 32, 32)
@@ -561,6 +599,30 @@ region = Rect2(480, 256, 32, 32)
 [sub_resource type="AtlasTexture" id="AtlasTexture_yktmo"]
 atlas = ExtResource("3_4h8dm")
 region = Rect2(0, 288, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w0ckt"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(448, 320, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hrcag"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(480, 320, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_crdwo"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(0, 352, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_c70uq"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(32, 352, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lmykr"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(64, 352, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_oxxst"]
+atlas = ExtResource("3_4h8dm")
+region = Rect2(96, 352, 32, 32)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_7c0ke"]
 animations = [{
@@ -687,6 +749,23 @@ animations = [{
 "loop": true,
 "name": &"cae",
 "speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_klnk8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5en2p")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_81ry3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_06i0h")
+}],
+"loop": true,
+"name": &"cae_muy_alto",
+"speed": 8.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -896,6 +975,17 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_nfy6j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kl0ny")
+}],
+"loop": true,
+"name": &"escalera_idle",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_7ayym")
 }, {
 "duration": 1.0,
@@ -1030,6 +1120,23 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_0jbny")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_q7edq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_01337")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_noga5")
+}],
+"loop": true,
+"name": &"muere_desde_lo_alto",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_a2dq0")
 }, {
 "duration": 1.0,
@@ -1117,6 +1224,29 @@ animations = [{
 "loop": false,
 "name": &"trepa",
 "speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w0ckt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hrcag")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_crdwo")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_c70uq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lmykr")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_oxxst")
+}],
+"loop": true,
+"name": &"trepa_escalera",
+"speed": 10.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_4w6sy"]
@@ -1150,19 +1280,19 @@ font_size = 8
 outline_size = 1
 outline_color = Color(0, 0, 0, 1)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_wd5o3"]
-atlas = ExtResource("8_rdnqt")
-region = Rect2(2048, 0, 1024, 1024)
+[sub_resource type="AtlasTexture" id="AtlasTexture_jehix"]
+atlas = ExtResource("6_4w6sy")
+region = Rect2(32, 96, 32, 32)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_06eai"]
-atlas = ExtResource("8_rdnqt")
-region = Rect2(0, 3072, 1024, 1024)
+[sub_resource type="AtlasTexture" id="AtlasTexture_5nrr4"]
+atlas = ExtResource("6_4w6sy")
+region = Rect2(224, 64, 32, 32)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_4w6sy"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_wd5o3")
+"texture": SubResource("AtlasTexture_jehix")
 }],
 "loop": true,
 "name": &"desmayante",
@@ -1170,10 +1300,37 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_06eai")
+"texture": SubResource("AtlasTexture_5nrr4")
 }],
 "loop": true,
 "name": &"letal",
+"speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_20515"]
+atlas = ExtResource("6_4w6sy")
+region = Rect2(96, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7fwo6"]
+atlas = ExtResource("6_4w6sy")
+region = Rect2(160, 96, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_a0ktp"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_20515")
+}],
+"loop": true,
+"name": &"cuchillo",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7fwo6")
+}],
+"loop": true,
+"name": &"punio",
 "speed": 5.0
 }]
 
@@ -1184,16 +1341,17 @@ outline_size = 1
 outline_color = Color(0, 0, 0, 1)
 
 [node name="personaje" type="CharacterBody2D" unique_id=556512266 groups=["jugador"]]
+z_index = 2
 collision_layer = 2
 script = ExtResource("1_ho3dl")
 flecha_escena = ExtResource("2_b1pmb")
-metadata/_edit_horizontal_guides_ = [45.0, 4.0]
-metadata/_edit_vertical_guides_ = [33.0, 57.0]
+metadata/_edit_horizontal_guides_ = [45.0, 4.0, 966.0]
+metadata/_edit_vertical_guides_ = [32.0, 57.0]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1217327672 groups=["jugador"]]
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_7c0ke")
-animation = &"idle_sigilo"
+animation = &"camina_sigilo"
 
 [node name="ColisionParado" type="CollisionShape2D" parent="." unique_id=794600265]
 position = Vector2(0, 22)
@@ -1227,7 +1385,8 @@ target_position = Vector2(0, 0)
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1291885301]
 position = Vector2(0, 3)
 limit_left = 0
-limit_top = -400
+limit_top = 0
+limit_right = 1316134912
 limit_bottom = 1080
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=379042747]
@@ -1264,37 +1423,33 @@ texture = ExtResource("7_4h8dm")
 
 [node name="Interfaz" type="CanvasLayer" parent="." unique_id=1072943493]
 
-[node name="IconoFlecha" type="AnimatedSprite2D" parent="Interfaz" unique_id=1571725991]
-position = Vector2(61.00003, 998)
-scale = Vector2(0.08, 0.08)
+[node name="IconosFlecha" type="AnimatedSprite2D" parent="Interfaz" unique_id=1571725991]
+position = Vector2(64.00003, 998)
+scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_4w6sy")
 animation = &"letal"
 
-[node name="IconoPuño" type="Sprite2D" parent="Interfaz" unique_id=1872493598]
-position = Vector2(55.999996, 928.0001)
-scale = Vector2(0.08, 0.08)
-texture = ExtResource("7_4w6sy")
-
-[node name="IconoCuchillo" type="Sprite2D" parent="Interfaz" unique_id=1480434818]
-position = Vector2(55.999996, 928.0001)
-scale = Vector2(1.3, 1.3)
-texture = ExtResource("8_ink26")
+[node name="IconosMelee" type="AnimatedSprite2D" parent="Interfaz" unique_id=1772542105]
+position = Vector2(64, 888)
+scale = Vector2(2, 2)
+sprite_frames = SubResource("SpriteFrames_a0ktp")
+animation = &"punio"
 
 [node name="TextoFlecha" type="Label" parent="Interfaz" unique_id=679472245]
-offset_left = 34.0
-offset_top = 959.9999
-offset_right = 70.0
-offset_bottom = 975.9999
+offset_left = 32.0
+offset_top = 949.9999
+offset_right = 68.0
+offset_bottom = 965.9999
 theme_override_font_sizes/font_size = 24
 label_settings = SubResource("LabelSettings_ink26")
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="TextoMelee" type="Label" parent="Interfaz" unique_id=1156204247]
-offset_left = 33.999996
-offset_top = 879.9999
-offset_right = 70.0
-offset_bottom = 895.9999
+offset_left = 31.999996
+offset_top = 839.9999
+offset_right = 68.0
+offset_bottom = 855.9999
 theme_override_font_sizes/font_size = 24
 label_settings = SubResource("LabelSettings_ink26")
 horizontal_alignment = 1

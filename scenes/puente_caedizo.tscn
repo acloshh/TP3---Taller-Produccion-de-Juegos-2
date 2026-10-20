@@ -1,0 +1,71 @@
+[gd_scene format=4 uid="uid://bamuewpqv1mbm"]
+
+[ext_resource type="Texture2D" uid="uid://0icwnor7627t" path="res://assets/tiles/TILESET_MAPAS_002.png" id="1_0rsux"]
+[ext_resource type="Script" uid="uid://dmpd4ptx8ynwy" path="res://scripts/puente_caedizo.gd" id="1_2xtkf"]
+[ext_resource type="Script" uid="uid://dyw7owdw6diw7" path="res://scripts/contrapeso.gd" id="3_cmv2p"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2xtkf"]
+texture = ExtResource("1_0rsux")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+6:0/0 = 0
+7:0/0 = 0
+8:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+4:1/0 = 0
+5:1/0 = 0
+8:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+3:2/0 = 0
+4:2/0 = 0
+4:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-9.0234375, 9.996094, 16, 10.003906, 16, 16, -16, 16)
+5:2/0 = 0
+5:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, 10.003906, 16, 10.000336, 16, 16, -16, 16)
+6:2/0 = 0
+6:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, 9.996094, 16, 9.988281, 16, 16, -16, 16)
+7:2/0 = 0
+7:2/0/physics_layer_0/polygon_0/points = PackedVector2Array(-16, 10.003906, 9.965126, 9.996306, 16, 16, -16, 16)
+8:2/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_cmv2p"]
+tile_size = Vector2i(32, 32)
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_2xtkf")
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lcth7"]
+size = Vector2(14.000977, 725.00024)
+
+[node name="PuenteCaedizo" type="Node2D" unique_id=1329185201]
+z_index = 4
+script = ExtResource("1_2xtkf")
+
+[node name="Pivote" type="Node2D" parent="." unique_id=1670612577]
+position = Vector2(1581, 1080)
+rotation = 1.5707964
+
+[node name="TileMapLayer" type="TileMapLayer" parent="Pivote" unique_id=2057303525]
+scale = Vector2(4, 4)
+tile_map_data = PackedByteArray("AAD/////AAAHAAIAAAD+////AAAGAAIAAAD9////AAAFAAIAAAD8////AAAGAAIAAAD6////AAAFAAIAAAD7////AAAGAAIAAAD5////AAAEAAIAAAA=")
+tile_set = SubResource("TileSet_cmv2p")
+
+[node name="Contrapeso" type="StaticBody2D" parent="." unique_id=163197560]
+position = Vector2(-0.00036621094, -0.00036621094)
+scale = Vector2(0.99999994, 0.99999994)
+collision_layer = 4
+collision_mask = 4
+script = ExtResource("3_cmv2p")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Contrapeso" unique_id=400622590]
+position = Vector2(1587.9998, 625.5001)
+scale = Vector2(0.9999997, 0.9999997)
+shape = SubResource("RectangleShape2D_lcth7")

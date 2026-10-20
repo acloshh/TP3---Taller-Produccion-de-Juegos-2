@@ -3,13 +3,13 @@
 [ext_resource type="Script" path="res://scripts/marcador_patrulla.gd" id="1_vaxtn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_nfhhh"]
-size = Vector2(20, 667)
+size = Vector2(30, 667)
 
 [node name="MarcadorEscalera" type="Area2D" unique_id=990370329]
-collision_mask = 4
+collision_mask = 6
 script = ExtResource("1_vaxtn")
 orden = 5
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1529290320]
-position = Vector2(0, 189.5)
+position = Vector2(0, -2.5)
 shape = SubResource("RectangleShape2D_nfhhh")
