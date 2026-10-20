@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://cmege67a3kf2w"]
+
+[ext_resource type="Script" uid="uid://crd2ciiyr7a2e" path="res://scripts/pantalla_mensajes.gd" id="1_uu64d"]
+[ext_resource type="FontFile" uid="uid://beo32a2h43lqy" path="res://fonts/Minecraft.ttf" id="2_ihb8f"]
+
+[node name="PantallaMensajes" type="CanvasLayer" unique_id=1639516645]
+script = ExtResource("1_uu64d")
+
+[node name="FondoOscuro" type="ColorRect" parent="." unique_id=1575007509]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Contenedor" type="VBoxContainer" parent="." unique_id=760575881]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -38.5
+offset_right = 20.0
+offset_bottom = 38.5
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+alignment = 1
+
+[node name="Titulo" type="Label" parent="Contenedor" unique_id=980508241]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_ihb8f")
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitulo" type="Label" parent="Contenedor" unique_id=1820878995]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_ihb8f")
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruccion" type="Label" parent="Contenedor" unique_id=1414655715]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_ihb8f")
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1

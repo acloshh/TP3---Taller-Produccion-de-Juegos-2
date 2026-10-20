@@ -8,8 +8,11 @@ const JUMP_VELOCITY = -700.0
 var gravity_up = 1800.0
 var gravity_down = 2200.0
 const DISTANCIA_REHEN = 16
-var nivel_ocultamiento = 0
 
+# --- UMBRAL DE DAÑO POR CAÍDA ---
+const MAX_VELOCIDAD_CAIDA_SEGURA = 1400.0 
+
+var nivel_ocultamiento = 0
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 @export var flecha_escena: PackedScene
@@ -28,8 +31,7 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var popup_acciones = $PopUpAcciones
 @onready var linea_trayectoria = $LineaTrayectoria
 
-# --- VARIABLES DE INTERFAZ ACTUALIZADAS ---
-@onready var iconos_flechas = $Interfaz/IconosFlecha
+@onready var iconos_flechas = $Interfaz/IconosFlechas
 @onready var texto_flecha = $Interfaz/TextoFlecha
 @onready var texto_melee = $Interfaz/TextoMelee
 @onready var iconos_melee = $Interfaz/IconosMelee
@@ -37,15 +39,15 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 var pos_inicial_disparo_x = 0.0
 
-# --- ESTADOS PRINCIPALES Y AJUSTES DE SIMETRÍA ---
 var es_sigilo = false
 var esta_acostado = false
 var facing_left = false
 var is_hanging = false
 var accion_bloqueante = false
 var enemigo_agarrado = null
+var esta_muerto = false
+var en_zona_interactiva = false
 
-# --- SISTEMA DE ESCALERAS ---
 var zona_de_escalera = false
 var pos_x_escalera = 0.0
 var trepando_escalera = false
@@ -54,11 +56,9 @@ var ancho_colision_original = 0.0
 var pos_x_colision_original = 0.0 
 var timer_cooldown_escalera = 0.0 
 
-# Ajustá estos dos valores si necesitás acercar/alejar las colisiones o centrar el dibujo al girar:
 var distancia_frente = 15.0
 var compensacion_sprite = 0
 
-# --- SISTEMAS DE ARMAS Y COMBOS ---
 var is_aiming = false
 var fuerza_arco = 50.0
 var direccion_tiro = Vector2.RIGHT
@@ -83,25 +83,25 @@ func _ready():
 	
 	pos_inicial_disparo_x = abs(punto_disparo.position.x)
 	
-	# Reproducimos la animación inicial de las armas
 	iconos_flechas.play(tipo_flecha)
 	texto_flecha.text = "F. Letal"
-	
 	texto_melee.text = "Cuchillo"
 	iconos_melee.play("cuchillo")
 
 func _physics_process(delta):
+	if esta_muerto:
+		move_and_slide()
+		return
+
 	if timer_cooldown_escalera > 0.0:
 		timer_cooldown_escalera -= delta
 
-	# Entrada a la escalera
 	if zona_de_escalera and not trepando_escalera and not accion_bloqueante and timer_cooldown_escalera <= 0.0:
 		if Input.is_action_pressed("arriba") or Input.is_action_pressed("abajo"):
 			trepando_escalera = true
 			colision_parado.shape.size.x = 8.0 
 			colision_parado.position.x = 0.0 
 			
-			# Desactivamos colisión con el terreno (Capa 1) para atravesar bloques de plataformas
 			set_collision_mask_value(1, false)
 			ledge_collider.disabled = true 
 			
@@ -121,17 +121,13 @@ func _physics_process(delta):
 		else:
 			anim.play("escalera_idle")
 			
-		# Salto para soltar escalera
 		if Input.is_action_just_pressed("saltar"):
-			# Probamos si al activar la colisión chocaríamos con la tierra/plataforma
 			set_collision_mask_value(1, true)
 			var choca_con_bloque = test_move(global_transform, Vector2.ZERO)
 			
 			if choca_con_bloque:
-				# Si da verdadero, estamos dentro de un bloque. Apagamos la colisión y anulamos el salto.
 				set_collision_mask_value(1, false)
 			else:
-				# Si está libre, se suelta y salta normal.
 				trepando_escalera = false
 				colision_parado.shape.size.x = ancho_colision_original 
 				colision_parado.position.x = pos_x_colision_original 
@@ -212,7 +208,6 @@ func _physics_process(delta):
 			
 	if Input.is_action_pressed("apuntar") and not is_hanging and enemigo_agarrado == null and not accion_bloqueante:
 		is_aiming = true
-		
 		var vector_apuntado = Input.get_vector("mover_izq", "mover_der", "arriba", "abajo")
 		if vector_apuntado != Vector2.ZERO:
 			direccion_tiro = vector_apuntado.normalized()
@@ -303,7 +298,7 @@ func _physics_process(delta):
 		else:
 			velocity.x = move_toward(velocity.x, 0, current_speed)
 
-		if Input.is_action_just_pressed("saltar") and is_on_floor() and not accion_bloqueante and not esta_acostado and not (es_sigilo and top_check.is_colliding()):
+		if Input.is_action_just_pressed("saltar") and is_on_floor() and not accion_bloqueante and not esta_acostado and not (es_sigilo and top_check.is_colliding()) and not en_zona_interactiva:
 			velocity.y = JUMP_VELOCITY
 			es_sigilo = false 
 
@@ -318,7 +313,12 @@ func _physics_process(delta):
 			enemigo_agarrado.actualizar_movimiento_agarrado(direction, facing_left)
 
 	update_animation(direction)
+	var velocidad_y_previa = velocity.y
+	
 	move_and_slide()
+
+	if is_on_floor() and velocidad_y_previa > MAX_VELOCIDAD_CAIDA_SEGURA:
+		morir_por_caida()
 
 	if Input.is_action_just_pressed("cambiar_arma"):
 		if tipo_flecha == "letal":
@@ -339,7 +339,6 @@ func _physics_process(delta):
 			texto_melee.text = "Cuchillo"
 			iconos_melee.play("cuchillo")
 			
-	# --- DETECCIÓN DE VEGETACIÓN ---
 	nivel_ocultamiento = 0
 	var arbol = get_tree()
 	if arbol and arbol.current_scene:
@@ -395,6 +394,9 @@ func check_ledge_grab():
 			velocity = Vector2.ZERO
 
 func update_animation(direction):
+	if esta_muerto:
+		return
+
 	anim.flip_h = facing_left
 	var offset_base_x = compensacion_sprite if facing_left else 0.0
 	
@@ -424,7 +426,10 @@ func update_animation(direction):
 		if velocity.y < 0:
 			anim.play("salta_hacia_arriba")
 		else:
-			anim.play("cae")
+			if velocity.y > MAX_VELOCIDAD_CAIDA_SEGURA:
+				anim.play("cae_muy_alto")
+			else:
+				anim.play("cae")
 	elif esta_acostado:
 		if direction != 0:
 			anim.play("arrastra_acostado")
@@ -478,9 +483,9 @@ func _on_animation_finished():
 	combo_paso = 0
 
 func _on_hitbox_body_entered(body):
-	if body.is_in_group("enemigo"):
+	if body.is_in_group("enemigo") or body.is_in_group("cazadora"):
 		if body.has_method("recibir_dano"):
-			body.recibir_dano()
+			body.recibir_dano(global_position.x)
 		else:
 			body.queue_free()
 
@@ -495,10 +500,55 @@ func salir_zona_escalera():
 		colision_parado.shape.size.x = ancho_colision_original 
 		colision_parado.position.x = pos_x_colision_original 
 		
-		# Cambios aplicados de forma segura con call_deferred
 		ledge_collider.set_deferred("disabled", false)
 		call_deferred("set_collision_mask_value", 1, true)
 		
-		# Si salía hacia arriba, lo acomodamos sobre la plataforma
 		if Input.is_action_pressed("arriba"):
 			position.y -= 4
+
+# --- FUNCIONES DE MUERTE CORREGIDAS ---
+
+func morir(razon_muerte: String = "Fuiste neutralizado."):
+	if esta_muerto:
+		return
+	esta_muerto = true
+	accion_bloqueante = true
+	velocity = Vector2.ZERO
+	
+	colision_parado.set_deferred("disabled", true)
+	colision_sigilo.set_deferred("disabled", true)
+	colision_acostado.set_deferred("disabled", true)
+	
+	anim.play("aterriza_en_el_piso")
+	await anim.animation_finished
+	
+	anim.play("aterriza_en_el_piso_danio")
+	await anim.animation_finished
+	
+	var ui_msg = get_tree().get_first_node_in_group("mensajes_ui")
+	if ui_msg:
+		ui_msg.mostrar_muerte(razon_muerte)
+	else:
+		await get_tree().create_timer(1.2).timeout
+		get_tree().reload_current_scene()
+
+func morir_por_caida():
+	if esta_muerto:
+		return
+	esta_muerto = true
+	accion_bloqueante = true
+	velocity = Vector2.ZERO
+	
+	colision_parado.set_deferred("disabled", true)
+	colision_sigilo.set_deferred("disabled", true)
+	colision_acostado.set_deferred("disabled", true)
+	
+	anim.play("aterriza_en_el_piso_danio")
+	await anim.animation_finished
+	
+	var ui_msg = get_tree().get_first_node_in_group("mensajes_ui")
+	if ui_msg:
+		ui_msg.mostrar_muerte("La caída fue demasiado alta.")
+	else:
+		await get_tree().create_timer(1.2).timeout
+		get_tree().reload_current_scene()

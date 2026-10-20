@@ -720,7 +720,7 @@ animations = [{
 "texture": SubResource("AtlasTexture_yswyh")
 }],
 "loop": false,
-"name": &"aterriza_en_el_piso_daño",
+"name": &"aterriza_en_el_piso_danio",
 "speed": 10.0
 }, {
 "frames": [{
@@ -1351,7 +1351,7 @@ metadata/_edit_vertical_guides_ = [32.0, 57.0]
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1217327672 groups=["jugador"]]
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SpriteFrames_7c0ke")
-animation = &"camina_sigilo"
+animation = &"cae_muy_alto"
 
 [node name="ColisionParado" type="CollisionShape2D" parent="." unique_id=794600265]
 position = Vector2(0, 22)
@@ -1386,7 +1386,7 @@ target_position = Vector2(0, 0)
 position = Vector2(0, 3)
 limit_left = 0
 limit_top = 0
-limit_right = 1316134912
+limit_right = 21553
 limit_bottom = 1080
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=379042747]
@@ -1423,7 +1423,7 @@ texture = ExtResource("7_4h8dm")
 
 [node name="Interfaz" type="CanvasLayer" parent="." unique_id=1072943493]
 
-[node name="IconosFlecha" type="AnimatedSprite2D" parent="Interfaz" unique_id=1571725991]
+[node name="IconosFlechas" type="AnimatedSprite2D" parent="Interfaz" unique_id=1571725991]
 position = Vector2(64.00003, 998)
 scale = Vector2(2, 2)
 sprite_frames = SubResource("SpriteFrames_4w6sy")

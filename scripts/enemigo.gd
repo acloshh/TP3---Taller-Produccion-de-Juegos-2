@@ -21,6 +21,9 @@ var direccion_escalera = -1
 var ancho_colision_original = 0.0
 var tiempo_en_escalera = 0.0 
 
+# --- EFECTOS VISUALES ---
+@export var escena_sangre: PackedScene
+
 @onready var anim = $AnimatedSprite2D
 @onready var ray_muro = $RayMuro
 @onready var ray_piso = $RayPiso
@@ -50,8 +53,7 @@ func _ready():
 	$CollisionShape2D.shape = $CollisionShape2D.shape.duplicate()
 	ancho_colision_original = $CollisionShape2D.shape.size.x
 	
-	if has_node("IconoEstado"):
-		$IconoEstado.hide()
+	cambiar_icono_estado("")
 
 func _physics_process(delta):
 	procesar_vision(delta)
@@ -75,6 +77,11 @@ func _physics_process(delta):
 		tiempo_desmayado += delta
 		if tiempo_desmayado >= 10.0: 
 			despertarse()
+		return
+
+	# Pausa de la IA si está procesando el knockup por daño
+	if esta_herido:
+		move_and_slide()
 		return
 
 	match estado_actual:
@@ -116,6 +123,16 @@ func _physics_process(delta):
 				soltar_escalera()
 
 	move_and_slide()
+
+	# Chequeo directo por colisión física contra el jugador
+	if estado_actual not in [Estado.MUERTO, Estado.DESMAYADO, Estado.AGARRADO]:
+		for i in range(get_slide_collision_count()):
+			var colision = get_slide_collision(i)
+			var collider = colision.get_collider()
+			if collider and collider.is_in_group("jugador"):
+				if collider.has_method("morir"):
+					collider.morir("Un guardia te ha descubierto y ejecutado.")
+
 	actualizar_animaciones()
 
 # --- SEGURIDAD DE ESCALERA ---
@@ -125,10 +142,38 @@ func abortar_escalera():
 		call_deferred("set_collision_mask_value", 1, true)
 		$CollisionShape2D.shape.size.x = ancho_colision_original
 
+# --- SISTEMA DE ICONO ESTADO ---
+
+func cambiar_icono_estado(animacion_icono):
+	if not has_node("IconoEstado"): return
+	
+	if animacion_icono == "":
+		$IconoEstado.hide()
+		return
+		
+	$IconoEstado.show()
+	$IconoEstado.play(animacion_icono)
+	
+	if animacion_icono == "dormido":
+		var mod_x = 20.0 if anim.flip_h else -20.0
+		$IconoEstado.offset = Vector2(mod_x, 25.0)
+		$IconoEstado.scale = Vector2(2.0, 2.0)
+	else:
+		$IconoEstado.offset = Vector2(0.0, 0.0)
+		$IconoEstado.scale = Vector2(1.0, 1.0)
+
+# --- SISTEMA DE SANGRE ---
+
+func generar_sangre():
+	if escena_sangre:
+		var sangre = escena_sangre.instantiate()
+		get_parent().add_child(sangre)
+		sangre.global_position = global_position + Vector2(0, -15)
+
 # --- FUNCIONES DE VISIÓN ---
 
 func procesar_vision(delta):
-	if estado_actual in [Estado.MUERTO, Estado.DESMAYADO, Estado.AGARRADO]:
+	if esta_herido or estado_actual in [Estado.MUERTO, Estado.DESMAYADO, Estado.AGARRADO]:
 		return
 		
 	if jugador_en_vision:
@@ -143,7 +188,6 @@ func procesar_vision(delta):
 		if camuflaje == null: 
 			camuflaje = 0
 
-		# 1. ARBUSTO: Invisible SOLO si está en el arbusto Y en sigilo/acostada
 		var esta_escondido = camuflaje == 2 and (jugador_en_vision.es_sigilo or jugador_en_vision.esta_acostado)
 		if esta_escondido:
 			bajar_sospecha_gradual(delta)
@@ -153,7 +197,6 @@ func procesar_vision(delta):
 			if estado_alerta == 0:
 				entrar_estado_sospecha()
 			
-			# 2. PASTO ALTO: Tarda más en detectar
 			var velocidad_deteccion = 60.0 
 			if camuflaje == 1:
 				velocidad_deteccion = 15.0 
@@ -173,9 +216,7 @@ func bajar_sospecha_gradual(delta):
 		estado_actual = Estado.SOSPECHANDO
 		tiempo_sospecha = 0.0
 		nivel_sospecha = 99.0
-		if has_node("IconoEstado"):
-			$IconoEstado.show()
-			$IconoEstado.play("sospecha")
+		cambiar_icono_estado("sospecha")
 
 	if nivel_sospecha > 0:
 		nivel_sospecha -= delta * 40
@@ -199,24 +240,19 @@ func entrar_estado_sospecha():
 	estado_alerta = 1
 	estado_actual = Estado.SOSPECHANDO
 	tiempo_sospecha = 0.0
-	if has_node("IconoEstado"):
-		$IconoEstado.show()
-		$IconoEstado.play("sospecha")
+	cambiar_icono_estado("sospecha")
 
 func entrar_estado_alerta():
 	abortar_escalera()
 	estado_alerta = 2
 	estado_actual = Estado.AGRESIVO
-	if has_node("IconoEstado"):
-		$IconoEstado.show()
-		$IconoEstado.play("alerta")
+	cambiar_icono_estado("alerta")
 
 func bajar_alerta():
 	estado_alerta = 0
 	if estado_actual == Estado.SOSPECHANDO:
 		estado_actual = Estado.PATRULLANDO
-	if has_node("IconoEstado"):
-		$IconoEstado.hide()
+	cambiar_icono_estado("")
 
 func comportamiento_patrulla(_delta):
 	var jugador = get_tree().get_first_node_in_group("jugador")
@@ -267,7 +303,10 @@ func comportamiento_agresivo():
 			dar_vuelta()
 			
 		var distancia = global_position.distance_to(jugador.global_position)
-		if distancia > 350.0:
+		if distancia < 25.0:
+			if jugador.has_method("morir"):
+				jugador.morir("Un guardia te ha descubierto y ejecutado.")
+		elif distancia > 350.0:
 			bajar_sospecha_gradual(100.0)
 
 func dar_vuelta():
@@ -319,7 +358,7 @@ func actualizar_animaciones():
 		Estado.EN_ESCALERA:
 			reproducir_animacion("trepa_escalera")
 
-func recibir_dano():
+func recibir_dano(atacante_x = null):
 	abortar_escalera()
 	$CollisionShape2D.shape.size.x = ancho_colision_original 
 	if estado_actual == Estado.TREPANDO:
@@ -329,21 +368,41 @@ func recibir_dano():
 		return
 		
 	vida -= 1
+	
 	if vida <= 0:
 		morir_general("danio_cae_al_suelo")
 	else:
 		esta_herido = true 
+		nivel_sospecha = 100.0
 		entrar_estado_alerta() 
-		velocity.x = 0 
+		
+		if atacante_x != null:
+			var dir_al_atacante = sign(atacante_x - global_position.x)
+			if dir_al_atacante != 0 and dir_al_atacante != direccion_x:
+				dar_vuelta()
+		
+		if atacante_x != null:
+			var dir_empuje = sign(global_position.x - atacante_x)
+			if dir_empuje == 0: 
+				dir_empuje = -direccion_x
+			velocity.x = dir_empuje * 180.0
+		else:
+			velocity.x = -direccion_x * 180.0
+			
+		velocity.y = -300.0
+		
 		reproducir_animacion("recibe_danio")
 		await anim.animation_finished 
+		
+		velocity.x = 0
 		esta_herido = false 
 
 func morir_general(animacion_caida):
 	estado_actual = Estado.MUERTO
 	velocity.x = 0
-	if has_node("IconoEstado"):
-		$IconoEstado.hide()
+	anim.flip_h = not anim.flip_h 
+	cambiar_icono_estado("")
+	generar_sangre()
 	reproducir_animacion(animacion_caida)
 	await anim.animation_finished
 	reproducir_animacion("muerto") 
@@ -362,8 +421,7 @@ func ser_agarrado():
 	abortar_escalera()
 	$CollisionShape2D.shape.size.x = ancho_colision_original 
 	estado_actual = Estado.AGARRADO
-	if has_node("IconoEstado"):
-		$IconoEstado.hide()
+	cambiar_icono_estado("")
 	$CollisionShape2D.set_deferred("disabled", true)
 	velocity = Vector2.ZERO
 	reproducir_animacion("agarrado")
@@ -372,8 +430,7 @@ func ser_desmayado():
 	$CollisionShape2D.shape.size.x = ancho_colision_original 
 	estado_actual = Estado.DESMAYADO
 	tiene_gorro = false
-	if has_node("IconoEstado"):
-		$IconoEstado.hide()
+	cambiar_icono_estado("dormido")
 	reproducir_animacion("agarrado_desmayando")
 	await anim.animation_finished
 	if estado_actual == Estado.DESMAYADO:
@@ -381,16 +438,23 @@ func ser_desmayado():
 
 func ser_asesinado():
 	estado_actual = Estado.MUERTO
+	cambiar_icono_estado("")
+	generar_sangre()
 	reproducir_animacion("agarrado_matar")
 
 func soltar_cuerpo(es_muerte):
 	set_physics_process(true)
 	$CollisionShape2D.set_deferred("disabled", false)
 	set_collision_mask_value(1, true)
+	
+	anim.flip_h = not anim.flip_h 
+	
 	if es_muerte:
 		reproducir_animacion("muerto")
+		cambiar_icono_estado("")
 	else:
 		tiempo_desmayado = 0.0
+		cambiar_icono_estado("dormido")
 		reproducir_animacion("agarrado_desmayado_cae_al_suelo")
 		await anim.animation_finished
 		if estado_actual == Estado.DESMAYADO:
@@ -409,8 +473,8 @@ func ser_neutralizado():
 	abortar_escalera()
 	estado_actual = Estado.MUERTO
 	velocity = Vector2.ZERO
-	if has_node("IconoEstado"):
-		$IconoEstado.hide()
+	cambiar_icono_estado("")
+	generar_sangre()
 	reproducir_animacion("agarrado_matar")
 	await anim.animation_finished
 	reproducir_animacion("muerto")
@@ -432,14 +496,17 @@ func recibir_flechazo(tipo_flecha):
 		tiene_gorro = false
 		tiempo_desmayado = 0.0
 		velocity.x = 0
-		if has_node("IconoEstado"):
-			$IconoEstado.hide()
+		
+		anim.flip_h = not anim.flip_h 
+		
+		cambiar_icono_estado("dormido")
 		$CollisionShape2D.set_deferred("disabled", false)
 		reproducir_animacion("desmayado_idle")
 
 func despertarse():
 	estado_actual = Estado.LEVANTANDOSE
 	tiempo_desmayado = 0.0
+	cambiar_icono_estado("")
 	anim.play("empieza_a_levantarse")
 	await anim.animation_finished
 	anim.play("mira_izquierda_derecha_levantandose")
@@ -470,18 +537,13 @@ func recibir_orden_marcador(orden, tiempo, marcador = null):
 	elif orden == 5 or orden == 6: 
 		if marcador == null: return
 		
-		# --- SISTEMA DE PROBABILIDAD (50% de chance) ---
-		# randf() saca un número entre 0.0 y 1.0. 
-		# Si es mayor a 0.5, el guardia ignora la escalera y sigue de largo.
-		if randf() > 0.25:
+		if randf() > 0.5:
 			return
-		# -----------------------------------------------
 		
 		estado_actual = Estado.EN_ESCALERA
 		$CollisionShape2D.shape.size.x = 10.0 
 		tiempo_en_escalera = 0.0 
 		
-		# Apagamos colisión con el terreno (Capa 1) para que la plataforma sólida no frene al enemigo
 		set_collision_mask_value(1, false)
 		
 		var colision_escalera = marcador.get_node("CollisionShape2D")
@@ -491,7 +553,7 @@ func recibir_orden_marcador(orden, tiempo, marcador = null):
 		if global_position.y < centro_real_y:
 			direccion_escalera = 1 
 		else:
-			direccion_escalera = -1
+			direccion_escalera = -1 
 
 func check_ledge_grab():
 	if is_on_wall() and wall_check.is_colliding() and not floor_check.is_colliding() and velocity.y >= 0:
@@ -508,12 +570,10 @@ func ejecutar_trepada():
 
 func soltar_escalera():
 	if estado_actual == Estado.EN_ESCALERA and tiempo_en_escalera > 0.1:
-		# Reactivamos la colisión sólida con el terreno
 		set_collision_mask_value(1, true)
 		$CollisionShape2D.shape.size.x = ancho_colision_original
 		
 		if direccion_escalera == -1: 
-			# Si subía, pequeño salto/empuje para asentarse arriba del bloque
 			estado_actual = Estado.SALTANDO
 			velocity.y = JUMP_VELOCITY * 0.7
 			position.y -= 4
