@@ -28,6 +28,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="Titulo" type="Label" parent="Contenedor" unique_id=980508241]

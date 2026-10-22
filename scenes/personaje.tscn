@@ -1341,7 +1341,7 @@ outline_size = 1
 outline_color = Color(0, 0, 0, 1)
 
 [node name="personaje" type="CharacterBody2D" unique_id=556512266 groups=["jugador"]]
-z_index = 2
+z_index = 3
 collision_layer = 2
 script = ExtResource("1_ho3dl")
 flecha_escena = ExtResource("2_b1pmb")

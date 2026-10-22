@@ -1,6 +1,7 @@
 [gd_scene format=4 uid="uid://bpr2wjn0p21va"]
 
 [ext_resource type="PackedScene" uid="uid://bamuewpqv1mbm" path="res://scenes/puente_caedizo.tscn" id="1_35q48"]
+[ext_resource type="Script" uid="uid://dssjjgss72ppi" path="res://scripts/mundo.gd" id="1_vnytd"]
 [ext_resource type="Texture2D" uid="uid://dd8ubang0x12" path="res://assets/fondo/Tall Forest Files/Assets/Layers/back.png" id="1_vwj67"]
 [ext_resource type="PackedScene" uid="uid://benohryqp7hn0" path="res://scenes/personaje.tscn" id="1_wqn8j"]
 [ext_resource type="PackedScene" uid="uid://c2v0rolmc3otc" path="res://scenes/enemigo.tscn" id="2_a2ps7"]
@@ -239,6 +240,8 @@ animations = [{
 size = Vector2(80, 60)
 
 [node name="Node2D" type="Node2D" unique_id=215393839]
+process_mode = 3
+script = ExtResource("1_vnytd")
 metadata/_edit_horizontal_guides_ = [777.0, 337.0]
 metadata/_edit_vertical_guides_ = [15457.0, 21541.0, 360.0, 1556.0]
 
@@ -293,7 +296,7 @@ scale = Vector2(4.5, 4.5)
 texture = ExtResource("3_75jji")
 
 [node name="personaje" parent="." unique_id=556512266 instance=ExtResource("1_wqn8j")]
-position = Vector2(18594, 53)
+position = Vector2(200, 53)
 
 [node name="enemigo" parent="." unique_id=191067378 instance=ExtResource("2_a2ps7")]
 position = Vector2(1544, 960)
@@ -443,8 +446,8 @@ position = Vector2(-0.00024414063, 21.999756)
 shape = SubResource("RectangleShape2D_w7nu4")
 
 [node name="PopupBoton" type="AnimatedSprite2D" parent="CartelControles" unique_id=561311438]
-position = Vector2(0, -336)
-scale = Vector2(6, 6)
+position = Vector2(0, -400)
+scale = Vector2(10, 10)
 sprite_frames = SubResource("SpriteFrames_w7nu4")
 
 [node name="CapaMenu" type="CanvasLayer" parent="CartelControles" unique_id=594895045]

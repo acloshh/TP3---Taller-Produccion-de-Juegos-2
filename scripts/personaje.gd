@@ -189,14 +189,14 @@ func _physics_process(delta):
 					if cuerpo.puede_recibir_takedown(global_position.x):
 						enemigo_agarrado = cuerpo
 						enemigo_agarrado.ser_agarrado()
-						popup_acciones.show()
+						#popup_acciones.show()
 						es_sigilo = false
 						ejecutar_accion_bloqueante("agarra_enemigo")
 						break
 		else:
 			enemigo_agarrado.soltar_cuerpo(false)
 			enemigo_agarrado = null
-			popup_acciones.hide()
+			#popup_acciones.hide()
 
 	if Input.is_action_just_pressed("atacar") and not is_hanging:
 		if enemigo_agarrado != null:
